@@ -20,16 +20,24 @@ def main():
     group.add_argument('-url', type=str, required=False, help='URL path to a manifest file stored at a HTTP/FTP endpoint.')
     group.add_argument('-token', type=str, required=False, help='Token string generated for a cart from portal.ihmpdcc.org.')
     parser.add_argument('-destination', type=str, required=False, default=".", help='Location to place all the downloads.')
+    parser.add_argument('-endpoint_priority', type=str, required=False, default="", help='Comma-separated endpoint priorities (in order of highest to lowest). The only valid endpoints are "HTTP","FTP","S3", and "FASP"')
     args = parser.parse_args()
 
+    if args.endpoint_priority != "":
+        eps = args.endpoint_priority.split(',')
+        for ep in eps:
+            if ep not in ['HTTP','FTP','S3','FASP']:
+                print("Entered a non-valid endpoint. Please check the endpoint_priority option for what are considered valid entries.")
+                exit(0)
+
     if args.manifest:
-        download_manifest(file_to_manifest(args.manifest),args.destination)
+        download_manifest(file_to_manifest(args.manifest),args.destination,args.endpoint_priority)
 
     elif args.url: 
-        download_manifest(url_to_manifest(args.url),args.destination)
+        download_manifest(url_to_manifest(args.url),args.destination,args.endpoint_priority)
 
     elif args.token:
-        download_manifest(token_to_manifest(args.token),args.destination)
+        download_manifest(token_to_manifest(args.token),args.destination,args.endpoint_priority)
 
 if __name__ == '__main__':
     main()

@@ -12,17 +12,19 @@ import boto
 # Accepts a manifest data structure which is a dict where the key is the unique
 # ID of the file designated by OSDF. The value is then another dict which contains
 # all URLs present as well as the MD5 for the file. 
-def download_manifest(manifest,destination):
+def download_manifest(manifest,destination,priorities):
     
     # iterate over the manifest data structure, one ID/file at a time
     for key in manifest: 
-        url = manifest[key]['urls'].split(',')[0]
+
+        url = get_prioritized_endpoint(manifest[key]['urls'],priorities)
+
         file_name = "{0}/{1}".format(destination,url.split('/')[-1])
         u = urllib2.urlopen(url)
         f = open(file_name, 'wb')
         meta = u.info()
         file_size = int(meta.getheaders("Content-Length")[0])
-        print "Downloading: {0} Bytes: {1}".format(file_name, file_size)
+        print("Downloading: {0} Bytes: {1}".format(file_name, file_size))
 
         file_size_dl = 0
         block_sz = 8192
@@ -49,3 +51,27 @@ def download_manifest(manifest,destination):
         if md5.hexdigest() == manifest[key]['md5']:
             print "MD5 check passed for file {1}".format(file_name)
         '''
+
+# Function to get the URL for the prioritized endpoint that the user requests.
+# Note that priorities can be a list of ordered priorities 
+def get_prioritized_endpoint(manifest_urls,priorities):
+
+    chosen_url = ""
+
+    urls = manifest_urls.split(',')
+    eps = priorities.split(',')
+
+    if eps[0] == "":
+        eps = ['HTTP','FTP','S3','FASP'] # if none provided, use this order
+
+    # Priorities are entered with highest first, so simply check until we find
+    # a valid endpoint and then leave.
+    for ep in eps:
+        if chosen_url != "":
+            break
+        else:
+            for url in urls:
+                if url.startswith(ep.lower()):
+                    chosen_url = url
+
+    return chosen_url
