@@ -4,8 +4,8 @@
 # Author: James Matsumura
 # Contact: jmatsumura@som.umaryland.edu
 
-# base 2.7 lib(s)
-import urllib2,hashlib,os,shutil
+# base 3.6 lib(s)
+import urllib,hashlib,os,shutil
 # additional dependencies (get from pip) 
 import boto
 
@@ -31,13 +31,13 @@ def download_manifest(manifest,destination,priorities):
             if os.path.exists(tmp_file_name):
                 current_byte = os.path.getsize(tmp_file_name)
 
-            u = urllib2.urlopen(url)
+            u = urllib.request.urlopen(url)
 
             with open(tmp_file_name,'wb') as file:
 
                 meta = u.info()
-                file_size = int(meta.getheaders("Content-Length")[0])
-                print("Downloading: {0} Bytes: {1}".format(file_name, file_size))
+                file_size = int(meta["Content-Length"])
+                print("Downloading file: {0} Bytes: {1}".format(file_name, file_size))
 
                 file_size_dl = 0
                 block_sz = 8192
@@ -48,15 +48,15 @@ def download_manifest(manifest,destination,priorities):
 
                     file_size_dl += len(buffer)
                     file.write(buffer)
-                    status = r"{0}  [{1:.2f}%]".format(file_size_dl, file_size_dl * 100. / file_size)
+                    status = "{0}  [{1:.2f}%]".format(file_size_dl, file_size_dl * 100. / file_size)
                     status = status + chr(8)*(len(status)+1)
-                    print status,
+                    print("\r{0}".format(status),end="")
 
             # If the download is complete, establish the final file
             if checksum_matches(tmp_file_name,manifest[key]['md5']):
                 shutil.move(tmp_file_name,file_name)
             else:
-                print("MD5 check failed.")
+                print("\rMD5 check failed for the file: {0}.".format(url.split('/')[-1]))
 
 # Function to get the URL for the prioritized endpoint that the user requests.
 # Note that priorities can be a list of ordered priorities 
@@ -97,4 +97,3 @@ def checksum_matches(file_path,original_md5):
         return True
     else:
         return False
-        

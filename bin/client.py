@@ -6,7 +6,7 @@
 # Author: James Matsumura
 # Contact: jmatsumura@som.umaryland.edu
 
-# base 2.7 lib(s)
+# base 3.6 lib(s)
 import argparse
 
 from process_manifest import download_manifest

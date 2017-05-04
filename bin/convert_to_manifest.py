@@ -5,8 +5,8 @@
 # Author: James Matsumura
 # Contact: jmatsumura@som.umaryland.edu
 
-# base 2.7 lib(s)
-import urllib2,csv
+# base 3.6 lib(s)
+import urllib,csv,io
 
 # Takes in a local file which contains manifest data and converts it to the data
 # stucture that is expected for the function download_manifest() in 
@@ -22,9 +22,9 @@ def file_to_manifest(file):
 # process_manifest.py
 def url_to_manifest(url):
 
-    response = urllib2.urlopen(url)
+    response = urllib.request.urlopen(url)
 
-    return tsv_to_manifest(response)
+    return tsv_to_manifest(io.TextIOWrapper(response))
 
 # Takes in a token that correspondes to a cart/manifest entity. This is then
 # converted into the data structure expected for the function download_manifest() 

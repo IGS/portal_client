@@ -2,18 +2,18 @@
 
 Python-based client for downloading files hosted by the Human Microbiome Data Analysis and Coordination Center (hmpdacc.org).
 
-This comes bundled with a Docker install that builds Python 2.7 as well as any dependencies specific to the client. One can use the Docker container to run the script using the following steps:
+This comes bundled with a Docker install that builds Python 3.6 as well as any dependencies specific to the client. One can use the Docker container to run the script using the following steps:
 
 1. Invoke the Dockerfile to build. For example, if you are in the directory where the Dockerfile is run the command:
   * `docker build . -t python_src`
 2. Now use the Docker image just built to create a container and run the client like so:
-  * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python client.py -help`
+  * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python3 client.py -help`
     * NOTE: this run command cleans up after itself, so you should not see any Python containers lingering (although images will remain unless you remove them).
 3. Test that it works by downloading 2 small files to your current directory:
- * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python client.py -url https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_4e4fdaf58.tsv`
+ * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python3 client.py -url https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_4e4fdaf58.tsv`
 
 ## Dependencies:
-- [Python 2.7](https://www.python.org/download/releases/2.7/)
+- [Python 3.6](https://www.python.org/download/releases/2.7/)
 - [boto](https://pypi.python.org/pypi/boto) 
 
 ## Manifest Format
