@@ -31,18 +31,21 @@ def download_manifest(manifest,destination,priorities):
             if os.path.exists(tmp_file_name):
                 current_byte = os.path.getsize(tmp_file_name)
 
-            u = urllib.request.urlopen(url)
+            headers = {}
+            headers['Range'] = 'bytes={0}-'.format(current_byte)
+            req = urllib.request.Request(url,headers=headers)
+            res = urllib.request.urlopen(req)
 
-            with open(tmp_file_name,'wb') as file:
+            with open(tmp_file_name,'ab') as file:
 
-                meta = u.info()
+                meta = res.info()
                 file_size = int(meta["Content-Length"])
                 print("Downloading file: {0} Bytes: {1}".format(file_name, file_size))
 
                 file_size_dl = 0
                 block_sz = 8192
                 while True:
-                    buffer = u.read(block_sz)
+                    buffer = res.read(block_sz)
                     if not buffer:
                         break
 
