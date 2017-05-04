@@ -38,20 +38,24 @@ def download_manifest(manifest,destination,priorities):
 
             with open(tmp_file_name,'ab') as file:
 
-                meta = res.info()
-                file_size = int(meta["Content-Length"])
+                # Need to pull the size without the potential bytes buffer
+                file_size = int(urllib.request.urlopen(url).info()['Content-Length'])
                 print("Downloading file: {0} Bytes: {1}".format(file_name, file_size))
 
-                file_size_dl = 0
                 block_sz = 8192
+
                 while True:
+
                     buffer = res.read(block_sz)
+
                     if not buffer:
                         break
 
-                    file_size_dl += len(buffer)
                     file.write(buffer)
-                    status = "{0}  [{1:.2f}%]".format(file_size_dl, file_size_dl * 100. / file_size)
+
+                    current_byte += len(buffer)
+
+                    status = "{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / file_size)
                     status = status + chr(8)*(len(status)+1)
                     print("\r{0}".format(status),end="")
 
