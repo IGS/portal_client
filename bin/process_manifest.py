@@ -42,7 +42,6 @@ def download_manifest(manifest,destination,priorities):
 
             # If we only have part of a file, get the new start position
             current_byte = 0
-
             if os.path.exists(tmp_file_name):
                 current_byte = os.path.getsize(tmp_file_name)
 
@@ -61,8 +60,8 @@ def download_manifest(manifest,destination,priorities):
 
                 while True:
 
-                    buffer = res.read(block_sz)
-
+                    buffer = get_buffer(res,s3_conn,block_sz,current_byte,file_size)
+                    
                     if not buffer:
                         break
 
@@ -84,22 +83,22 @@ def download_manifest(manifest,destination,priorities):
 # Arguments:
 # url = path to location of file on the web
 # s3_conn = connection to S3 if this is an S3 endpoint
-# header = range to pull from the file
-def get_url_obj(url,s3_conn,header):
+# headers = range to pull from the file
+def get_url_obj(url,s3_conn,headers):
     if not s3_conn:
-        req = urllib.request.Request(url,headers=header)
-        try:
-            return urllib.request.urlopen(req)
-        except:
+        req = urllib.request.Request(url,headers=headers)
+        res = urllib.request.urlopen(req)
+        if res:
+            return res
+        else:
             sys.exit("Error -- cannot get network object for URL: {0}".format(url))
     else:
-        k = s3_get_key(url,s3_conn)
-        try:
-            return k.open()
-        except:
-            sys.exit("Error -- cannot get network object for URL: {0}".format(url))
+        res = s3_get_key(url,s3_conn)
+        if res:
+            return res
+        else:
+            sys.exit("Error -- cannot get network object for URL: s3://{0}".format(url))
             
-
 # Function to retrieve the file size from either an S3 or non-S3 endpoint.
 # Arguments:
 # url = path to location of file on the web
@@ -111,6 +110,30 @@ def get_file_size(url,s3_conn):
         k = s3_get_key(url,s3_conn)
         return k.size 
 
+# Function to retrieve a particular set of bytes from the endpoint file. For 
+# S3 endpoints this function is actually more along the lines of what is 
+# achieved by get_url_obj() for other endpoints as it just pulls a certain
+# range of bytes and hasn't actually pulled the entire network object. Note
+# that most of these arguments are needed for the S3 endpoint data. 
+# Arguments:
+# res = network object created by get_url_obj()
+# s3_conn = connection to S3 if this is an S3 endpoint
+# block_sz = number of bytes to be considered a chunk to allow interrupts/resumes
+# start_pos = position to start at for S3
+# max_range = maximum value to use for the range, same as the file's size
+def get_buffer(res,s3_conn,block_sz,start_pos,max_range):
+    if not s3_conn:
+        return res.read(block_sz)
+    else:
+        if start_pos >= max_range:
+            return None # exit the while loop
+        headers = {}
+        range_end = start_pos+block_sz-1 # offset by 1 since bytes are 0-based
+        headers['Range'] = 'bytes={0}-'.format(start_pos)
+        if range_end <= max_range:
+            headers['Range'] += "{0}".format(range_end)
+        return res.get_contents_as_string(headers=headers)
+
 # Function to get the Key object from S3.
 # Arguments:
 # url = path to location of file on the web
@@ -119,7 +142,7 @@ def s3_get_key(url,s3_conn):
     bucket = url.split('/',1)[0]
     key = url.split('/',1)[1]
     b = s3_conn.get_bucket(bucket)
-    return b.get_key("/{0}".format(key))
+    return b.get_key(key)
 
 # Function to get the URL for the prioritized endpoint that the user requests.
 # Note that priorities can be a list of ordered priorities.
