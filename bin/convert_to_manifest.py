@@ -42,6 +42,6 @@ def tsv_to_manifest(tsv_object):
     next(reader,None) # skip the manifest header
 
     for row in reader:
-        manifest[row[0]] = {'md5':row[1],'urls':row[3]}
+        manifest[row[0]] = {'md5':row[1],'urls':row[3],'id':row[0]}
     
     return manifest

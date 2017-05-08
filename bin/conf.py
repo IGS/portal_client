@@ -1,0 +1,2 @@
+SecretAccessKey = ""
+AccessKeyId = ""
