@@ -5,13 +5,10 @@
 # Contact: jmatsumura@som.umaryland.edu
 
 # base 3.6 lib(s)
-import urllib,hashlib,os,shutil
+import urllib,hashlib,os,shutil,sys
 # additional dependencies (get from pip) 
 import boto
 from boto.utils import get_instance_metadata
-from boto.s3.connection import OrdinaryCallingFormat
-# set variables for AWS in conf
-from conf import SecretAccessKey,AccessKeyId
 
 # Function to download each URL from the manifest.
 # Arguments:
@@ -38,7 +35,7 @@ def download_manifest(manifest,destination,priorities):
             # Handle S3 connections if the endpoint is preferred
             s3_conn = ""
             if url.lower().startswith('s3'):
-                s3_conn = boto.connect_s3(aws_access_key_id=AccessKeyId,aws_secret_access_key=SecretAccessKey,calling_format=OrdinaryCallingFormat())
+                s3_conn = boto.connect_s3(anon=True)
                 url = url.lstrip('s3://')
 
             tmp_file_name = "{0}.partial".format(file_name)
@@ -53,9 +50,6 @@ def download_manifest(manifest,destination,priorities):
             headers['Range'] = 'bytes={0}-'.format(current_byte)
             
             res = get_url_obj(url,s3_conn,headers)
-            if not res:
-                print("Could not get valid URL object for ID: {0}".format(manifest[key]['id']))
-                exit(0)
             
             with open(tmp_file_name,'ab') as file:
 
@@ -94,10 +88,17 @@ def download_manifest(manifest,destination,priorities):
 def get_url_obj(url,s3_conn,header):
     if not s3_conn:
         req = urllib.request.Request(url,headers=header)
-        return urllib.request.urlopen(req)
+        try:
+            return urllib.request.urlopen(req)
+        except:
+            sys.exit("Error -- cannot get network object for URL: {0}".format(url))
     else:
         k = s3_get_key(url,s3_conn)
-        return k.open()
+        try:
+            return k.open()
+        except:
+            sys.exit("Error -- cannot get network object for URL: {0}".format(url))
+            
 
 # Function to retrieve the file size from either an S3 or non-S3 endpoint.
 # Arguments:
@@ -115,12 +116,10 @@ def get_file_size(url,s3_conn):
 # url = path to location of file on the web
 # s3_conn = connection to S3 if this is an S3 endpoint
 def s3_get_key(url,s3_conn):
-    bucket = url.rsplit('/',1)[0]
-    key = url.rsplit('/',1)[1]
-    print(bucket)
-    print(key)
+    bucket = url.split('/',1)[0]
+    key = url.split('/',1)[1]
     b = s3_conn.get_bucket(bucket)
-    return b.get_key(key)
+    return b.get_key("/{0}".format(key))
 
 # Function to get the URL for the prioritized endpoint that the user requests.
 # Note that priorities can be a list of ordered priorities.
