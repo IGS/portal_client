@@ -25,7 +25,7 @@ def download_manifest(manifest,destination,priorities):
         # Handle private data or simply nodes that are not correct and lack 
         # endpoint data
         if url == "":
-            print("No valid URL found for file ID: {0}".format(manifest[key]['id']))
+            print("No valid URL found for file ID: {0}".format(key))
             continue
 
         file_name = "{0}/{1}".format(destination,url.split('/')[-1])
