@@ -27,7 +27,7 @@ def main():
         eps = args.endpoint_priority.split(',')
         for ep in eps:
             if ep not in ['HTTP','FTP','S3','FASP']:
-                sys.exit("Entered a non-valid endpoint. Please check the endpoint_priority option for what are considered valid entries.")
+                sys.exit("Error -- Entered a non-valid endpoint. Please check the endpoint_priority option for what are considered valid entries.")
 
     if args.manifest:
         download_manifest(file_to_manifest(args.manifest),args.destination,args.endpoint_priority)
