@@ -178,7 +178,7 @@ def get_prioritized_endpoint(manifest_urls,priorities):
                     chosen_url = url
 
     # Quick fix until the correct endpoints for the demo data (bucket+key) are established on S3. 
-    if 's3://' and 'HMDEMO' in chosen_url:
+    if 's3://' in chosen_url and 'HMDEMO' in chosen_url:
         elements = chosen_url.split('/')
         chosen_url = "s3://{0}/DEMO/{1}/{2}".format(elements[2],elements[4],"/".join(elements[-4:]))
 
