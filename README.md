@@ -7,10 +7,15 @@ This comes bundled with a Docker install that builds Python 3.6 as well as any d
 1. Invoke the Dockerfile to build. For example, if you are in the directory where the Dockerfile is run the command:
   * `docker build . -t python_src`
 2. Now use the Docker image just built to create a container and run the client like so:
-  * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python3 client.py -help`
+  * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python3 client.py -h`
     * NOTE: this run command cleans up after itself, so you should not see any Python containers lingering (although images will remain unless you remove them).
-3. Test that it works by downloading 2 small files to your current directory:
- * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python3 client.py -url https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_4e4fdaf58.tsv`
+3. Test that it works by downloading a few small files to your current directory:
+  * Basic functionality can be tested using the following example:
+    * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python3 client.py -url https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv`
+  * If running on EC2, this will automatically be detected and S3 will be the preferred endpoint. Example:
+    * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python3 client.py -url https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv`
+  * If you want to decide which endpoint to prioritize, you can pass it a single endpoint or a comma-separated list (e.g. 'HTTP' or 'HTTP,S3,FTP'). Example to override S3 prioritized endpoint on an EC2 instance:
+    * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python3 client.py -url https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv -endpoint_priority HTTP`
 
 ## Dependencies:
 - [Python 3.6](https://www.python.org/download/releases/2.7/)

@@ -91,13 +91,13 @@ def get_url_obj(url,s3_conn,headers):
         if res:
             return res
         else:
-            sys.exit("Error -- cannot get network object for URL: {0}".format(url))
+            sys.exit("Error -- cannot get network object for URL: {0} . Try another endpoint as the previous used is likely invalid.".format(url))
     else:
         res = s3_get_key(url,s3_conn)
         if res:
             return res
         else:
-            sys.exit("Error -- cannot get network object for URL: s3://{0}".format(url))
+            sys.exit("Error -- cannot get network object for URL: s3://{0} . Try another endpoint as the previous used is likely invalid.".format(url))
             
 # Function to retrieve the file size from either an S3 or non-S3 endpoint.
 # Arguments:
@@ -176,6 +176,11 @@ def get_prioritized_endpoint(manifest_urls,priorities):
             for url in urls:
                 if url.startswith(ep.lower()):
                     chosen_url = url
+
+    # Quick fix until the correct endpoints for the demo data (bucket+key) are established on S3. 
+    if 's3://' and 'HMDEMO' in chosen_url:
+        elements = chosen_url.split('/')
+        chosen_url = "s3://{0}/DEMO/{1}/{2}".format(elements[2],elements[4],"/".join(elements[-4:]))
 
     return chosen_url
 
