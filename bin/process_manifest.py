@@ -6,9 +6,14 @@
 
 # base 3.6 lib(s)
 import urllib,hashlib,os,shutil,sys
+from ftplib import FTP
 # additional dependencies (get from pip) 
 import boto
 from boto.utils import get_instance_metadata
+
+# Establish a connection to S3 reagrdless of whether we use it so that it 
+# doesn't need to be passed through the functions or re-established many times.
+s3_conn = boto.connect_s3(anon=True)
 
 # Function to download each URL from the manifest.
 # Arguments:
@@ -29,14 +34,9 @@ def download_manifest(manifest,destination,priorities):
             continue
 
         file_name = "{0}/{1}".format(destination,url.split('/')[-1])
+        endpoint = url.split(':')[0].upper()
 
         if not os.path.exists(file_name): # only need to download if the file is not present
-
-            # Handle S3 connections if the endpoint is preferred
-            s3_conn = ""
-            if url.lower().startswith('s3'):
-                s3_conn = boto.connect_s3(anon=True)
-                url = url.lstrip('s3://')
 
             tmp_file_name = "{0}.partial".format(file_name)
 
@@ -48,19 +48,19 @@ def download_manifest(manifest,destination,priorities):
             headers = {}
             headers['Range'] = 'bytes={0}-'.format(current_byte)
             
-            res = get_url_obj(url,s3_conn,headers)
+            res = get_url_obj(url,endpoint,headers)
             
             with open(tmp_file_name,'ab') as file:
 
                 # Need to pull the size without the potential bytes buffer
-                file_size = get_file_size(url,s3_conn)
-                print("Downloading file: {0} Bytes: {1}".format(file_name, file_size))
+                file_size = get_file_size(url,endpoint)
+                print("downloading file (via {0}): {1} | total bytes = {2}".format(endpoint, file_name, file_size))
 
-                block_sz = 8192
+                block_sz = 123456 # ~.1 MB intervals
 
                 while True:
 
-                    buffer = get_buffer(res,s3_conn,block_sz,current_byte,file_size)
+                    buffer = get_buffer(res,endpoint,block_sz,current_byte,file_size)
                     
                     if not buffer:
                         break
@@ -82,49 +82,47 @@ def download_manifest(manifest,destination,priorities):
 # Function to get a network object of the file that can be iterated over.
 # Arguments:
 # url = path to location of file on the web
-# s3_conn = connection to S3 if this is an S3 endpoint
+# endpoint = HTTP/FTP/S3/FASP
 # headers = range to pull from the file
-def get_url_obj(url,s3_conn,headers):
-    if not s3_conn:
+def get_url_obj(url,endpoint,headers):
+    if endpoint == "HTTP":
         req = urllib.request.Request(url,headers=headers)
         res = urllib.request.urlopen(req)
         if res:
             return res
-        else:
-            sys.exit("Error -- cannot get network object for URL: {0} . Try another endpoint as the previous used is likely invalid.".format(url))
-    else:
-        res = s3_get_key(url,s3_conn)
+
+    elif endpoint == "S3":
+        res = s3_get_key(url)
         if res:
             return res
-        else:
-            sys.exit("Error -- cannot get network object for URL: s3://{0} . Try another endpoint as the previous used is likely invalid.".format(url))
+
+    # If made it here, no network object established
+    sys.exit("Error -- cannot get network object for URL: {0} . Try another endpoint as the previous used is likely invalid.".format(url))
             
-# Function to retrieve the file size from either an S3 or non-S3 endpoint.
+# Function to retrieve the file size.
 # Arguments:
 # url = path to location of file on the web
-# s3_conn = connection to S3 if this is an S3 endpoint
-def get_file_size(url,s3_conn):
-    if not s3_conn:
+# endpoint = HTTP/FTP/S3/FASP
+def get_file_size(url,endpoint):
+    if endpoint == 'HTTP':
         return int(urllib.request.urlopen(url).info()['Content-Length'])
-    else:
-        k = s3_get_key(url,s3_conn)
+
+    elif endpoint == 'S3':
+        k = s3_get_key(url)
         return k.size 
 
-# Function to retrieve a particular set of bytes from the endpoint file. For 
-# S3 endpoints this function is actually more along the lines of what is 
-# achieved by get_url_obj() for other endpoints as it just pulls a certain
-# range of bytes and hasn't actually pulled the entire network object. Note
-# that most of these arguments are needed for the S3 endpoint data. 
+# Function to retrieve a particular set of bytes from the file.
 # Arguments:
 # res = network object created by get_url_obj()
-# s3_conn = connection to S3 if this is an S3 endpoint
+# endpoint = HTTP/FTP/S3/FASP
 # block_sz = number of bytes to be considered a chunk to allow interrupts/resumes
 # start_pos = position to start at for S3
 # max_range = maximum value to use for the range, same as the file's size
-def get_buffer(res,s3_conn,block_sz,start_pos,max_range):
-    if not s3_conn:
+def get_buffer(res,endpoint,block_sz,start_pos,max_range):
+    if endpoint == "HTTP":
         return res.read(block_sz)
-    else:
+
+    elif endpoint == "S3":
         if start_pos >= max_range:
             return None # exit the while loop
         headers = {}
@@ -137,8 +135,8 @@ def get_buffer(res,s3_conn,block_sz,start_pos,max_range):
 # Function to get the Key object from S3.
 # Arguments:
 # url = path to location of file on the web
-# s3_conn = connection to S3 if this is an S3 endpoint
-def s3_get_key(url,s3_conn):
+def s3_get_key(url):
+    url = url.lstrip('s3://')
     bucket = url.split('/',1)[0]
     key = url.split('/',1)[1]
     b = s3_conn.get_bucket(bucket)
