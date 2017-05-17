@@ -82,7 +82,7 @@ def download_manifest(manifest,destination,priorities):
 # Function to get a network object of the file that can be iterated over.
 # Arguments:
 # url = path to location of file on the web
-# endpoint = HTTP/FTP/S3/FASP
+# endpoint = HTTP/FTP/S3
 # headers = range to pull from the file
 def get_url_obj(url,endpoint,headers):
     if endpoint == "HTTP":
@@ -102,7 +102,7 @@ def get_url_obj(url,endpoint,headers):
 # Function to retrieve the file size.
 # Arguments:
 # url = path to location of file on the web
-# endpoint = HTTP/FTP/S3/FASP
+# endpoint = HTTP/FTP/S3
 def get_file_size(url,endpoint):
     if endpoint == 'HTTP':
         return int(urllib.request.urlopen(url).info()['Content-Length'])
@@ -114,7 +114,7 @@ def get_file_size(url,endpoint):
 # Function to retrieve a particular set of bytes from the file.
 # Arguments:
 # res = network object created by get_url_obj()
-# endpoint = HTTP/FTP/S3/FASP
+# endpoint = HTTP/FTP/S3
 # block_sz = number of bytes to be considered a chunk to allow interrupts/resumes
 # start_pos = position to start at for S3
 # max_range = maximum value to use for the range, same as the file's size
@@ -161,9 +161,9 @@ def get_prioritized_endpoint(manifest_urls,priorities):
         md = get_instance_metadata(timeout=0.5,num_retries=1)
 
         if len(md.keys()) > 0:
-            eps = ['S3','HTTP','FTP','FASP']
+            eps = ['S3','HTTP','FTP']
         else:
-            eps = ['HTTP','FTP','S3','FASP'] # if none provided, use this order
+            eps = ['HTTP','FTP','S3'] # if none provided, use this order
 
     # Priorities are entered with highest first, so simply check until we find
     # a valid endpoint and then leave.

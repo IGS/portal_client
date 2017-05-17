@@ -1,6 +1,6 @@
 # hmp_client
 
-Python-based client for downloading files hosted by the Human Microbiome Data Analysis and Coordination Center (hmpdacc.org).
+Python-based client for downloading files hosted by the Human Microbiome Data Analysis and Coordination Center (hmpdacc.org and ihmpdcc.org).
 
 This comes bundled with a Docker install that builds Python 3.6 as well as any dependencies specific to the client. One can use the Docker container to run the script using the following steps:
 
@@ -29,3 +29,6 @@ If generating your own manifest, you **must** follow the same formatting as the 
 |---|---|---|---|
 |8d65351c0cb6f7eb9726a1c463f1c34e|626b3b87b8958e1db84489d727d16607|2353731|http:blahblah,ftp:blashblah,s3:blahblah|
 |08c2ad843ddce68446571cfc0f4e7b19|87256429a37cf57c044879f974cd7421|2386996|http:blahblah,ftp:blahblah,s3:blahblah|
+
+## Notes
+Aspera's FASP technology can be used for some of the files hosted by the iHMP DCC. This client does not handle downloads from FASP endpoints. Please follow the tutorial found [here](http://ihmpdcc.org/resources/aspera.php) if you wish to download using FASP.
