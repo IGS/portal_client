@@ -68,15 +68,14 @@ def download_manifest(manifest,destination,priorities,block_sz):
                     if block_sz > file_size:
                         generate_status_message("Block size greater than total file size, pulling entire file in one go.")
 
-                    buffer = get_buffer(res,endpoint,block_sz,current_byte,file_size)
+                    buffer = get_buffer(res,endpoint,block_sz,current_byte,file_size,file)
                     
-                    if not buffer:
+                    if not buffer: # note that only HTTP/S3 make it beyond this point
                         break
 
                     file.write(buffer)
 
                     current_byte += len(buffer)
-
                     generate_status_message("{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / file_size))
 
             # If the download is complete, establish the final file
@@ -133,9 +132,28 @@ def get_file_size(url,endpoint):
 # block_sz = number of bytes to be considered a chunk to allow interrupts/resumes
 # start_pos = position to start at
 # max_range = maximum value to use for the range, same as the file's size
-def get_buffer(res,endpoint,block_sz,start_pos,max_range):
+# file = file handle to write out to
+def get_buffer(res,endpoint,block_sz,start_pos,max_range,file):
     if endpoint == "HTTP":
         return res.read(block_sz)
+
+    elif endpoint == "FTP":
+
+        current_byte = start_pos
+
+        # The Python ftplib requires transfer to pass to a callback function,
+        # using this to break up the download into pieces.
+        def callback(data):
+            nonlocal current_byte
+            
+            file.write(data)
+
+            current_byte += len(data)
+            generate_status_message("{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / max_range))
+
+        ftp.retrbinary("RETR {0}".format(res),callback,blocksize=block_sz,rest=start_pos)
+
+        return None
 
     elif endpoint == "S3":
         if start_pos >= max_range:
