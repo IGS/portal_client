@@ -29,21 +29,17 @@ def download_manifest(manifest,destination,priorities,block_sz):
     # iterate over the manifest data structure, one ID/file at a time
     for key in manifest: 
 
-        url = get_prioritized_endpoint(manifest[key]['urls'],priorities)
-
-        url = url[0]
+        url_list = get_prioritized_endpoint(manifest[key]['urls'],priorities)
 
         # Handle private data or simply nodes that are not correct and lack 
         # endpoint data
-        if url == "":
-            print("No valid URL found for file ID: {0}".format(key))
+        if not url_list:
+            print("No valid URL found in the manifest for file ID: {0}".format(key))
             continue
 
-        file_name = "{0}/{1}".format(destination,url.split('/')[-1])
+        file_name = "{0}/{1}".format(destination,url_list[0].split('/')[-1])
 
         if not os.path.exists(file_name): # only need to download if the file is not present
-
-            endpoint = url.split(':')[0].upper()
 
             tmp_file_name = "{0}.partial".format(file_name)
 
@@ -58,8 +54,21 @@ def download_manifest(manifest,destination,priorities,block_sz):
             http_header = {} 
             http_header['Range'] = 'bytes={0}-'.format(current_byte)
             
-            res = get_url_obj(url,endpoint,http_header)
-            
+            res,endpoint = ("" for i in range(2))
+            eps = []
+
+            for url in url_list:
+                endpoint = url.split(':')[0].upper()
+                eps.append(endpoint)
+                res = get_url_obj(url,endpoint,http_header)
+
+                if res != "error": # if we get back a network object, continue
+                    break
+
+            if res == "error": # if all attempts resulted in no object, move on to next file
+                print("skipping file ID {0} as none of the URLs checked {1} yielded a valid file".format(key,eps))
+                continue
+
             with open(tmp_file_name,'ab') as file:
 
                 # Need to pull the size without the potential bytes buffer
@@ -69,7 +78,7 @@ def download_manifest(manifest,destination,priorities,block_sz):
                 while True:
 
                     if block_sz > file_size:
-                        generate_status_message("Block size greater than total file size, pulling entire file in one go.")
+                        generate_status_message("block size greater than total file size, pulling entire file in one go")
 
                     buffer = get_buffer(res,endpoint,block_sz,current_byte,file_size,file)
                     
@@ -111,7 +120,7 @@ def get_url_obj(url,endpoint,http_header):
             return res
 
     # If made it here, no network object established
-    sys.exit("Error -- cannot get network object for URL: {0} . Try another endpoint as the previous used is likely invalid.".format(url))
+    return "error"
             
 # Function to retrieve the file size.
 # Arguments:
