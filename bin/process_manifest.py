@@ -31,6 +31,8 @@ def download_manifest(manifest,destination,priorities,block_sz):
 
         url = get_prioritized_endpoint(manifest[key]['urls'],priorities)
 
+        url = url[0]
+
         # Handle private data or simply nodes that are not correct and lack 
         # endpoint data
         if url == "":
@@ -38,9 +40,10 @@ def download_manifest(manifest,destination,priorities,block_sz):
             continue
 
         file_name = "{0}/{1}".format(destination,url.split('/')[-1])
-        endpoint = url.split(':')[0].upper()
 
         if not os.path.exists(file_name): # only need to download if the file is not present
+
+            endpoint = url.split(':')[0].upper()
 
             tmp_file_name = "{0}.partial".format(file_name)
 
@@ -142,10 +145,13 @@ def get_buffer(res,endpoint,block_sz,start_pos,max_range,file):
         current_byte = start_pos
 
         # The Python ftplib requires transfer to pass to a callback function,
-        # using this to break up the download into pieces.
+        # using this to break up the download into pieces. Unfortunately this
+        # function by default accepts just the byte-block being pulled by 
+        # .retrbinary() so we need a nonlocal variable to help with printing
+        # out the progress.
         def callback(data):
             nonlocal current_byte
-            
+
             file.write(data)
 
             current_byte += len(data)
@@ -182,7 +188,7 @@ def s3_get_key(url):
 # priorities = priorities declared when calling client.py
 def get_prioritized_endpoint(manifest_urls,priorities):
 
-    chosen_url = ""
+    url_list = []
 
     urls = manifest_urls.split(',')
     eps = priorities.split(',')
@@ -198,22 +204,19 @@ def get_prioritized_endpoint(manifest_urls,priorities):
         else:
             eps = ['HTTP','FTP','S3'] # if none provided, use this order
 
-    # Priorities are entered with highest first, so simply check until we find
-    # a valid endpoint and then leave.
+    # Go through and build a list starting with the higher priorities first.
     for ep in eps:
-        if chosen_url != "":
-            break
-        else:
-            for url in urls:
-                if url.startswith(ep.lower()):
-                    chosen_url = url
+        for url in urls:
+            if url.startswith(ep.lower()):
 
-    # Quick fix until the correct endpoints for the demo data (bucket+key) are established on S3. 
-    if 's3://' in chosen_url and 'HMDEMO' in chosen_url:
-        elements = chosen_url.split('/')
-        chosen_url = "s3://{0}/DEMO/{1}/{2}".format(elements[2],elements[4],"/".join(elements[-4:]))
+                # Quick fix until the correct endpoints for the demo data (bucket+key) are established on S3. 
+                if 's3://' in url and 'HMDEMO' in url:
+                    elements = url.split('/')
+                    url = "s3://{0}/DEMO/{1}/{2}".format(elements[2],elements[4],"/".join(elements[-4:]))
 
-    return chosen_url
+                url_list.append(url)
+
+    return url_list
 
 # This function failing is largely telling that the data in OSDF for the
 # particular file's MD5 is not correct.
