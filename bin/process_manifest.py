@@ -11,16 +11,20 @@ from ftplib import FTP
 import boto
 from boto.utils import get_instance_metadata
 
-# Establish a connection to S3 reagrdless of whether we use it so that it 
-# doesn't need to be passed through the functions or re-established many times.
+# Establish a S3 connection.
 s3_conn = boto.connect_s3(anon=True)
+
+# Establish a FTP connection.
+ftp = FTP('public-ftp.hmpdacc.org')
+ftp.login('client') # any PW works as it's public
 
 # Function to download each URL from the manifest.
 # Arguments:
 # manifest = manifest dict data structure created by functions in convert_to_manifest.py
 # destination = set destination to place output declared when calling client.py
 # priorities = endpoint priorities established by get_prioritized_endpoint
-def download_manifest(manifest,destination,priorities):
+# block_sz = the byte size to break the file into to allow for interrupted downloads
+def download_manifest(manifest,destination,priorities,block_sz):
     
     # iterate over the manifest data structure, one ID/file at a time
     for key in manifest: 
@@ -45,10 +49,13 @@ def download_manifest(manifest,destination,priorities):
             if os.path.exists(tmp_file_name):
                 current_byte = os.path.getsize(tmp_file_name)
 
-            headers = {}
-            headers['Range'] = 'bytes={0}-'.format(current_byte)
+            # Need to try get the others to work like this, but for now HTTP 
+            # is the only one that can pull bytes in chunks without needing to
+            # drop the connection.
+            http_header = {} 
+            http_header['Range'] = 'bytes={0}-'.format(current_byte)
             
-            res = get_url_obj(url,endpoint,headers)
+            res = get_url_obj(url,endpoint,http_header)
             
             with open(tmp_file_name,'ab') as file:
 
@@ -56,9 +63,10 @@ def download_manifest(manifest,destination,priorities):
                 file_size = get_file_size(url,endpoint)
                 print("downloading file (via {0}): {1} | total bytes = {2}".format(endpoint, file_name, file_size))
 
-                block_sz = 123456 # ~.1 MB intervals
-
                 while True:
+
+                    if block_sz > file_size:
+                        generate_status_message("Block size greater than total file size, pulling entire file in one go.")
 
                     buffer = get_buffer(res,endpoint,block_sz,current_byte,file_size)
                     
@@ -69,9 +77,7 @@ def download_manifest(manifest,destination,priorities):
 
                     current_byte += len(buffer)
 
-                    status = "{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / file_size)
-                    status = status + chr(8)*(len(status)+1)
-                    print("\r{0}".format(status),end="")
+                    generate_status_message("{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / file_size))
 
             # If the download is complete, establish the final file
             if checksum_matches(tmp_file_name,manifest[key]['md5']):
@@ -83,13 +89,19 @@ def download_manifest(manifest,destination,priorities):
 # Arguments:
 # url = path to location of file on the web
 # endpoint = HTTP/FTP/S3
-# headers = range to pull from the file
-def get_url_obj(url,endpoint,headers):
+# http_header = HTTP range to pull from the file, the other endpoints require 
+# this processing in the get_buffer() function.
+def get_url_obj(url,endpoint,http_header):
     if endpoint == "HTTP":
-        req = urllib.request.Request(url,headers=headers)
+        req = urllib.request.Request(url,headers=http_header)
         res = urllib.request.urlopen(req)
         if res:
             return res
+
+    if endpoint == "FTP":
+        ftp_loc = url.split('public-ftp.hmpdacc.org')[1]
+        if list(ftp.mlsd(ftp_loc)): # make sure there's something there
+            return url.split('public-ftp.hmpdacc.org')[1]
 
     elif endpoint == "S3":
         res = s3_get_key(url)
@@ -107,6 +119,9 @@ def get_file_size(url,endpoint):
     if endpoint == 'HTTP':
         return int(urllib.request.urlopen(url).info()['Content-Length'])
 
+    elif endpoint == 'FTP':
+        return ftp.size(url.split('public-ftp.hmpdacc.org')[1])
+
     elif endpoint == 'S3':
         k = s3_get_key(url)
         return k.size 
@@ -116,7 +131,7 @@ def get_file_size(url,endpoint):
 # res = network object created by get_url_obj()
 # endpoint = HTTP/FTP/S3
 # block_sz = number of bytes to be considered a chunk to allow interrupts/resumes
-# start_pos = position to start at for S3
+# start_pos = position to start at
 # max_range = maximum value to use for the range, same as the file's size
 def get_buffer(res,endpoint,block_sz,start_pos,max_range):
     if endpoint == "HTTP":
@@ -200,3 +215,11 @@ def checksum_matches(file_path,original_md5):
         return True
     else:
         return False
+
+# Function to output a status message to the user.
+# Argument:
+# message = the string to temporarily output to the user
+def generate_status_message(message):
+    status = message
+    status = status + chr(8)*(len(status)+1) # backspace everything
+    print("\r{0}".format(status),end="")
