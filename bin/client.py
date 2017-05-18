@@ -19,9 +19,10 @@ def main():
     group.add_argument('-manifest', type=str, help='Location of a locally stored manifest file from portal.ihmpdcc.org.')
     group.add_argument('-url', type=str, required=False, help='URL path to a manifest file stored at a HTTP/FTP endpoint.')
     group.add_argument('-token', type=str, required=False, help='Token string generated for a cart from portal.ihmpdcc.org.')
-    parser.add_argument('-destination', type=str, required=False, default=".", help='Location to place all the downloads.')
-    parser.add_argument('-endpoint_priority', type=str, required=False, default="", help='Comma-separated endpoint priorities (in order of highest to lowest). The only valid endpoints for this client are "HTTP","FTP", and "S3".')
-    parser.add_argument('-block_size', type=int, required=False, default=123456, help='Optional size of bytes to return iteratively. Increasing requires less individual calls for the FTP/S3 endpoints and can speed up the download.')
+    parser.add_argument('-destination', type=str, required=False, default=".", help='Optional location to place all the downloads. Defaults to the current directory.')
+    parser.add_argument('-endpoint_priority', type=str, required=False, default="", help='Optional comma-separated endpoint priorities (in order of highest to lowest). The only valid endpoints for this client are "HTTP","FTP", and "S3" (and defaults to that order).')
+    parser.add_argument('-block_size', type=int, required=False, default=123456, help='Optional size of bytes to return iteratively. Increasing requires less individual calls for the FTP/S3 endpoints and can speed up the download. Defaults to 123456.')
+    parser.add_argument('-retries', type=int, required=False, default=0, help='Optional number of retries to perform in case of download failures. Defaults to 0.')
     args = parser.parse_args()
 
     if args.endpoint_priority != "":
@@ -30,14 +31,49 @@ def main():
             if ep not in ['HTTP','FTP','S3']:
                 sys.exit("Error -- Entered a non-valid endpoint. Please check the endpoint_priority option for what are considered valid entries.")
 
-    if args.manifest:
-        download_manifest(file_to_manifest(args.manifest),args.destination,args.endpoint_priority,args.block_size)
+    keep_trying = True
+    attempts = 0
+    result = []
 
-    elif args.url: 
-        download_manifest(url_to_manifest(args.url),args.destination,args.endpoint_priority,args.block_size)
+    while keep_trying:
 
-    elif args.token:
-        download_manifest(token_to_manifest(args.token),args.destination,args.endpoint_priority,args.block_size)
+        manifest = {}
+
+        if args.manifest:
+            manifest = file_to_manifest(args.manifest)
+            
+        elif args.url: 
+            manifest = url_to_manifest(args.url)
+
+        elif args.token:
+            manifest = token_to_manifest(args.token)
+
+        result = download_manifest(manifest,args.destination,args.endpoint_priority,args.block_size)
+
+        if len(result) == 0: # no failures found
+            keep_trying = False
+
+        else: 
+            retry_results_msg(result.count(1),result.count(2),result.count(3))
+
+            if attempts == args.retries:
+                keep_trying = False
+            else:
+                attempts += 1
+                print("\nDownload retry attempt number {0} initiating...\n".format(attempts))
+
+                if result.count(1) == len(result): # never going to get anywhere if no URLs are present
+                    keep_trying = False
+
+# Outputs the results of those files that failed to download
+def retry_results_msg(failure_1,failure_2,failure_3):
+
+    msg = "\nNot all files in manifest were downloaded successfully. Number of failures:\n" \
+        "{0} -- no valid URL in the manifest file\n" \
+        "{1} -- URL present in manifest, but not accessible at the location specified\n" \
+        "{2} -- MD5 check failed for file (file is corrupted or the wrong MD5 is attached to the file" 
+
+    print(msg.format(failure_1,failure_2,failure_3))
 
 if __name__ == '__main__':
     main()

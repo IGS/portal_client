@@ -26,6 +26,12 @@ ftp.login('client') # any PW works as it's public
 # block_sz = the byte size to break the file into to allow for interrupted downloads
 def download_manifest(manifest,destination,priorities,block_sz):
     
+    # build a list of elements to indicate how many and why the files failed
+    # 1 = no valid URL in manifest
+    # 2 = URL exists, but not accessible at the location specified
+    # 3 = MD5 check failed for file (file is corrupted or the wrong MD5 is attached to the file)
+    failed_files = [] 
+
     # iterate over the manifest data structure, one ID/file at a time
     for key in manifest: 
 
@@ -34,7 +40,8 @@ def download_manifest(manifest,destination,priorities,block_sz):
         # Handle private data or simply nodes that are not correct and lack 
         # endpoint data
         if not url_list:
-            print("No valid URL found in the manifest for file ID: {0}".format(key))
+            print("No valid URL found in the manifest for file ID {0}".format(key))
+            failed_files.append(1)
             continue
 
         file_name = "{0}/{1}".format(destination,url_list[0].split('/')[-1])
@@ -67,6 +74,7 @@ def download_manifest(manifest,destination,priorities,block_sz):
 
             if res == "error": # if all attempts resulted in no object, move on to next file
                 print("skipping file ID {0} as none of the URLs checked {1} yielded a valid file".format(key,eps))
+                failed_files.append(2)
                 continue
 
             with open(tmp_file_name,'ab') as file:
@@ -94,7 +102,10 @@ def download_manifest(manifest,destination,priorities,block_sz):
             if checksum_matches(tmp_file_name,manifest[key]['md5']):
                 shutil.move(tmp_file_name,file_name)
             else:
-                print("\rMD5 check failed for the file: {0}.".format(url.split('/')[-1]))
+                print("\rMD5 check failed for the file ID {0} , data may be corrupted".format(key))
+                failed_files.append(3)
+
+    return failed_files
 
 # Function to get a network object of the file that can be iterated over.
 # Arguments:
@@ -104,8 +115,14 @@ def download_manifest(manifest,destination,priorities,block_sz):
 # this processing in the get_buffer() function.
 def get_url_obj(url,endpoint,http_header):
     if endpoint == "HTTP":
-        req = urllib.request.Request(url,headers=http_header)
-        res = urllib.request.urlopen(req)
+        res = ""
+
+        try:
+            req = urllib.request.Request(url,headers=http_header)
+            res = urllib.request.urlopen(req)
+        except:
+            res = ""
+
         if res:
             return res
 
