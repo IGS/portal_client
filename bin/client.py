@@ -50,11 +50,11 @@ def main():
 
         result = download_manifest(manifest,args.destination,args.endpoint_priority,args.block_size)
 
-        if len(result) == 0: # no failures found
+        if len(result) == 0 or result.count(0) == len(result): # no failures found
             keep_trying = False
 
         else: 
-            retry_results_msg(result.count(1),result.count(2),result.count(3))
+            retry_results_msg(len(result),result.count(1),result.count(2),result.count(3))
 
             if attempts == args.retries:
                 keep_trying = False
@@ -66,14 +66,14 @@ def main():
                     keep_trying = False
 
 # Outputs the results of those files that failed to download
-def retry_results_msg(failure_1,failure_2,failure_3):
+def retry_results_msg(file_count,failure_1,failure_2,failure_3):
 
-    msg = "\nNot all files in manifest were downloaded successfully. Number of failures:\n" \
-        "{0} -- no valid URL in the manifest file\n" \
-        "{1} -- URL present in manifest, but not accessible at the location specified\n" \
-        "{2} -- MD5 check failed for file (file is corrupted or the wrong MD5 is attached to the file" 
+    msg = "\nNot all files in manifest (total of {0}) were downloaded successfully. Number of failures:\n" \
+        "{1} -- no valid URL in the manifest file\n" \
+        "{2} -- URL present in manifest, but not accessible at the location specified\n" \
+        "{3} -- MD5 check failed for file (file is corrupted or the wrong MD5 is attached to the file" 
 
-    print(msg.format(failure_1,failure_2,failure_3))
+    print(msg.format(file_count,failure_1,failure_2,failure_3))
 
 if __name__ == '__main__':
     main()
