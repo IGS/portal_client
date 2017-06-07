@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 # Client that functions to download data from the HMP DACC (http://hmpdacc.org/)
 # when provided either a manifest file (locally stored or at a URL/FTP endpoint) 
