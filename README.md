@@ -10,7 +10,7 @@ There are 3 main ways to run the hmp_client:
 2. Using the Dockerfile in this repository.
 3. Installing the dependencies manually.
 
-### Using a pre-built Chiron Docker image.
+### 1. Using a pre-built Chiron Docker image.
 
 [Chiron](http://github.com/IGS/Chiron) is a collection of Dockerized tools and pipelines for metagenomics developed by the Human Microbiome Project members and originally used in the Microbiome Cloud Workshop held in Baltimore, Maryland in June of 2017. The hmp_client is installed in each of the Chiron Docker images. Using Chiron, the hmp_client Docker image, which contains the hmp_client and very little else, can be run like so:
 
@@ -26,7 +26,7 @@ This will download, build, and start the hmp_client Docker image and place you a
 root@dba147a35981:/# hmp_client -manifest /opt/hmp_client/hmp_client-1.1/test/hmp_cart_example.tsv 
 ```
 
-### Using the Docker install in this repository
+### 2. Using the Docker install in this repository
 
 The client comes bundled with a Docker install that builds Python 3.6 as well as any dependencies specific to the client. One can use the Docker container to run the script using the following steps:
 
@@ -43,7 +43,7 @@ The client comes bundled with a Docker install that builds Python 3.6 as well as
   * If you want to decide which endpoint to prioritize, you can pass it a single endpoint or a comma-separated list (e.g. 'HTTP' or 'HTTP,S3,FTP'). Example to override S3 prioritized endpoint on an EC2 instance:
     * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src python3 client.py -url https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv -endpoint_priority HTTP`
 
-### Installing the dependencies manually.
+### 3. Installing the dependencies manually.
 
 The hmp_client requires Python 3 and the Boto library:
 
@@ -76,7 +76,7 @@ file and produce as output a shell script that contains an ascp command for
 every FASP URL that it finds in the manifest. That script is in the bin/
 subdirectory of this repository:
 
-(bin/manifest2ascp.py)
+[bin/manifest2ascp.py]
 
 It can be run with a command like the following, substituting in the appropriate username, password and manifest file location:
 
@@ -88,4 +88,4 @@ the current directory, but using the same directory structure that’s
 present on the server. Some additional guidance on setting ascp
 parameters can be found here:
 
-(http://ihmpdcc.org/resources/aspera.php)
+[http://ihmpdcc.org/resources/aspera.php]
