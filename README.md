@@ -53,30 +53,20 @@ The hmp_client requires Python 3 and the Boto library:
 
 One easy way to install Python 3 and the necessary dependencies is to use Virtualenv.
 
-## Manifest Format
-
-If generating your own manifest file, you **must** follow the same formatting as the following: 
-* Requires tab-separated values (TSV) in the following structure with a header line included and the same order for the data as seen here.
-
-|id|md5|size|urls|
-|---|---|---|---|
-|8d65351c0cb6f7eb9726a1c463f1c34e|626b3b87b8958e1db84489d727d16607|2353731|http:blahblah,ftp:blashblah,s3:blahblah|
-|08c2ad843ddce68446571cfc0f4e7b19|87256429a37cf57c044879f974cd7421|2386996|http:blahblah,ftp:blahblah,s3:blahblah|
-
 ## Using Aspera for FASP URLs
 
 Aspera's fast file transfer technology can be used for some of the
 files hosted by the iHMP DCC. The hmp_client does not yet directly
 handle downloads from FASP endpoints/URLs, however these files may be
 downloaded by using the Aspera *ascp* command-line utility, which can
-be downloaded from [the Aspera web site](http://downloads.asperasoft.com/en/downloads/2)
+be downloaded from [the Aspera web site](http://downloads.asperasoft.com/en/downloads/2).
 
-Another Python script, *manifest2ascp.py*, will accept as input a manifest
-file and produce as output a shell script that contains an ascp command for 
-every FASP URL that it finds in the manifest. That script is in the bin/
-subdirectory of this repository:
+Another Python script in this repository, *manifest2ascp.py*, will
+accept as input a manifest file and produce as output a shell script
+that contains an ascp command for every FASP URL that it finds in the
+manifest. That script is in the bin/ subdirectory of this repository:
 
-[tree/master/bin/manifest2ascp.py]
+<tree/master/bin/manifest2ascp.py>
 
 It can be run with a command like the following, substituting in the appropriate username, password and manifest file location:
 
@@ -88,4 +78,4 @@ the current directory, but using the same directory structure that’s
 present on the server. Some additional guidance on setting ascp
 parameters can be found here:
 
-[http://ihmpdcc.org/resources/aspera.php]
+<http://ihmpdcc.org/resources/aspera.php>
