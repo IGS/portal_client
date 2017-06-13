@@ -23,7 +23,7 @@ cd Chiron
 This will download, build, and start the hmp_client Docker image and place you at a shell prompt inside the Docker image. From there the hmp_client program is available and can be run on a sample manifest file that's included in the image:
 
 ```
-root@dba147a35981:/# hmp_client -manifest /opt/hmp_client/hmp_client-1.1/test/hmp_cart_example.tsv 
+root@dba147a35981:/# hmp_client -manifest /opt/hmp_client/test/hmp_cart_example.tsv 
 ```
 
 ### 2. Using the Docker install in this repository
