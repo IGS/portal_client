@@ -12,7 +12,7 @@ There are 3 main ways to run the hmp_client:
 
 ### Using a pre-built Chiron Docker image.
 
-[Chiron](http://github.com/IGS/Chiron) is a collection of Dockerized tools and pipelines for metagenomics developed by the Human Microbiome Project members and was initially developed for the Microbiome Cloud Workshop, held in June 2017 in Baltimore, Maryland. The hmp_client is installed in each of the Chiron Docker images. Using Chiron, the hmp_client Docker image, which contains the hmp_client and very little else, can be run like so:
+[Chiron](http://github.com/IGS/Chiron) is a collection of Dockerized tools and pipelines for metagenomics developed by the Human Microbiome Project members and originally used in the Microbiome Cloud Workshop held in Baltimore, Maryland in June of 2017. The hmp_client is installed in each of the Chiron Docker images. Using Chiron, the hmp_client Docker image, which contains the hmp_client and very little else, can be run like so:
 
 ```
 git clone https://github.com/IGS/Chiron.git
@@ -45,10 +45,13 @@ The client comes bundled with a Docker install that builds Python 3.6 as well as
 
 ### Installing the dependencies manually.
 
-The hmp client requires Python 3 and the Boto library:
+The hmp_client requires Python 3 and the Boto library:
 
-- [Python 3.6](https://www.python.org/download/releases/2.7/)
+- [Python 3.6](https://www.python.org/downloads/release/python-361/)
+
 - [boto](https://pypi.python.org/pypi/boto) 
+
+One easy way to install Python 3 and the necessary dependencies is to use Virtualenv.
 
 ## Manifest Format
 
@@ -62,4 +65,27 @@ If generating your own manifest file, you **must** follow the same formatting as
 
 ## Using Aspera for FASP URLs
 
-Aspera's FASP technology can be used for some of the files hosted by the iHMP DCC. This client does not handle downloads from FASP endpoints. Please follow the tutorial found [here](http://ihmpdcc.org/resources/aspera.php) if you wish to download using FASP.
+Aspera's fast file transfer technology can be used for some of the
+files hosted by the iHMP DCC. The hmp_client does not yet directly
+handle downloads from FASP endpoints/URLs, however these files may be
+downloaded by using the Aspera *ascp* command-line utility, which can
+be downloaded from [the Aspera web site](http://downloads.asperasoft.com/en/downloads/2)
+
+Another Python script, *manifest2ascp.py*, will accept as input a manifest
+file and produce as output a shell script that contains an ascp command for 
+every FASP URL that it finds in the manifest. That script is in the bin/
+subdirectory of this repository:
+
+(bin/manifest2ascp.py)
+
+It can be run with a command like the following, substituting in the appropriate username, password and manifest file location:
+
+./cart2ascp.py -manifest=hmp_cart_t2d_june_12_2017.tsv -user=username -password=password -ascp_options="-l 200M" > ascp-commands.sh
+
+This should generate a shell script called “ascp-commands.sh” that you
+can inspect and then run. By default it will download everything into
+the current directory, but using the same directory structure that’s
+present on the server. Some additional guidance on setting ascp
+parameters can be found here:
+
+(http://ihmpdcc.org/resources/aspera.php)
