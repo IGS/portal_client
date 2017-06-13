@@ -76,7 +76,7 @@ file and produce as output a shell script that contains an ascp command for
 every FASP URL that it finds in the manifest. That script is in the bin/
 subdirectory of this repository:
 
-[bin/manifest2ascp.py]
+[tree/master/bin/manifest2ascp.py]
 
 It can be run with a command like the following, substituting in the appropriate username, password and manifest file location:
 
