@@ -8,7 +8,7 @@
 # Contact: jmatsumura@som.umaryland.edu
 
 # base 3.6 lib(s)
-import argparse
+import argparse,os,errno
 
 from process_manifest import download_manifest
 from convert_to_manifest import file_to_manifest,url_to_manifest,token_to_manifest
@@ -31,6 +31,13 @@ def main():
         for ep in eps:
             if ep not in ['HTTP','FTP','S3']:
                 sys.exit("Error -- Entered a non-valid endpoint. Please check the endpoint_priority option for what are considered valid entries.")
+
+    if args.destination != ".":
+        try:
+            os.makedirs(args.destination)
+        except OSERROR as exception:
+            if exception.errno != errno.EEXIST:
+                raise
 
     keep_trying = True
     attempts = 0
