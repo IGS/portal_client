@@ -35,7 +35,7 @@ def main():
     if args.destination != ".":
         try:
             os.makedirs(args.destination)
-        except OSERROR as exception:
+        except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise
 
