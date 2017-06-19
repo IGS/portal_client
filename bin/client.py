@@ -8,7 +8,7 @@
 # Contact: jmatsumura@som.umaryland.edu
 
 # base 3.6 lib(s)
-import argparse,os,errno
+import argparse,os,errno,sys
 
 from process_manifest import download_manifest
 from convert_to_manifest import file_to_manifest,url_to_manifest,token_to_manifest
@@ -17,13 +17,24 @@ def main():
 
     parser = argparse.ArgumentParser(description='HMP client to download files given a manifest file generated from portal.ihmpdcc.org.')
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-manifest', type=str, help='Location of a locally stored manifest file from portal.ihmpdcc.org.')
-    group.add_argument('-url', type=str, required=False, help='URL path to a manifest file stored at a HTTP/FTP endpoint.')
-    group.add_argument('-token', type=str, required=False, help='Token string generated for a cart from portal.ihmpdcc.org.')
-    parser.add_argument('-destination', type=str, required=False, default=".", help='Optional location to place all the downloads. Defaults to the current directory.')
-    parser.add_argument('-endpoint_priority', type=str, required=False, default="", help='Optional comma-separated endpoint priorities (in order of highest to lowest). The only valid endpoints for this client are "HTTP","FTP", and "S3" (and defaults to that order).')
-    parser.add_argument('-block_size', type=int, required=False, default=123456, help='Optional size of bytes to return iteratively. Increasing requires less individual calls for the FTP/S3 endpoints and can speed up the download. Defaults to 123456.')
-    parser.add_argument('-retries', type=int, required=False, default=0, help='Optional number of retries to perform in case of download failures. Defaults to 0.')
+    group.add_argument('-m', '--manifest', type=str, help='Location of a locally stored manifest file from portal.ihmpdcc.org.')
+    group.add_argument('-u', '--url', type=str, required=False, help='URL path to a manifest file stored at a HTTP/FTP endpoint.')
+    group.add_argument('-t', '--token', type=str, required=False, help='Token string generated for a cart from portal.ihmpdcc.org.')
+    parser.add_argument('-d', '--destination', type=str, required=False, default=".", help='Optional location to place all the downloads. Defaults to the current directory.')
+    parser.add_argument('-p', '--endpoint_priority', type=str, required=False, default="", help='Optional comma-separated endpoint priorities (in order of highest to lowest). The only valid endpoints for this client are "HTTP","FTP", and "S3" (and defaults to that order).')
+    parser.add_argument('-b', '--block_size', type=int, required=False, default=123456, help='Optional size of bytes to return iteratively. Increasing requires fewer individual calls for the FTP/S3 endpoints and can speed up the download. Defaults to 123456.')
+    parser.add_argument('-r', '--retries', type=int, required=False, default=0, help='Optional number of retries to perform in case of download failures. Defaults to 0.')
+
+    # allow single-dash for any pre-1.3 long option for reverse-compatibility
+    # (but don't show them in the help message)
+    pre13_opts = { '-manifest': 1, '-url': 1, '-token': 1, '-destination': 1, '-endpoint_priority': 1, '-block_size': 1, '-retries': 1 }
+    new_argv = []
+    for arg in sys.argv:
+        if arg in pre13_opts:
+            arg = '-' + arg
+        new_argv.append(arg)
+    sys.argv = new_argv
+
     args = parser.parse_args()
 
     if args.endpoint_priority != "":
