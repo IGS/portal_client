@@ -31,18 +31,27 @@ root@dba147a35981:/# hmp_client -manifest /opt/hmp_client/test/hmp_cart_example.
 The client comes bundled with a Docker install that builds Python 3.6 as well as any dependencies specific to the client. One can use the Docker container to run the script using the following steps:
 
 1. Invoke the Dockerfile to build. Change to the directory that contains the Dockerfile and then run this command:
-  * `docker build . -t python_src`
+```
+  docker build . -t python_src
+```
 2. Now use the Docker image just built to create a container and run the client like so:
-  * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client -h`
+```
+   docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client -h
+```
     * NOTE: this run command cleans up after itself, so you should not see any Python containers lingering (although images will remain unless you remove them).
 3. Test that it works by downloading a few small files to your current directory:
   * Basic functionality can be tested using the following example:
-    * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv`
+```
+   docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv
+```
   * If running on EC2, this will automatically be detected and S3 will be the preferred endpoint. Example:
-    * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv`
+```
+   docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv
+```
   * If you want to decide which endpoint to prioritize, you can pass it a single endpoint or a comma-separated list (e.g. 'HTTP' or 'HTTP,S3,FTP'). Example to override S3 prioritized endpoint on an EC2 instance:
-    * `docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv --endpoint_priority=HTTP`
-
+```
+   docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv --endpoint_priority=HTTP
+```
 ### 3. Installing the dependencies manually.
 
 The hmp_client requires Python 3 and the Boto library:
