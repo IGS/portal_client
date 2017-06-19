@@ -38,7 +38,7 @@ The client comes bundled with a Docker install that builds Python 3.6 as well as
 ```
    docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client -h
 ```
-    * NOTE: this run command cleans up after itself, so you should not see any Python containers lingering (although images will remain unless you remove them).
+
 3. Test that it works by downloading a few small files to your current directory:
   * Basic functionality can be tested using the following example:
 ```
