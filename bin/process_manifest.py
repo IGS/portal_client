@@ -11,12 +11,29 @@ from ftplib import FTP
 import boto
 from boto.utils import get_instance_metadata
 
-# Establish a S3 connection.
-s3_conn = boto.connect_s3(anon=True)
+# S3 connection.
+S3_CONNS = {}
 
-# Establish a FTP connection.
-ftp = FTP('public-ftp.hmpdacc.org')
-ftp.login('client') # any PW works as it's public
+def get_s3_connection():
+    if 'S3' not in S3_CONNS:
+        S3_CONNS['S3'] = boto.connect_s3(anon=True)
+    return S3_CONNS['S3']
+
+# FTP connections.
+FTP_CONNS = {}
+
+def get_ftp_connection(host):
+    if host not in FTP_CONNS:
+        ftp = FTP(host)
+        ftp.login('hmp_client')
+        FTP_CONNS[host] = ftp
+    return FTP_CONNS[host]
+
+def parse_ftp_url(url):
+    dest = url.split('//')[1]
+    host = dest.split('/')[0]
+    file_path = url.split(host)[1]
+    return { 'dest': dest, 'host': host, 'file_path': file_path }
 
 # Function to download each URL from the manifest.
 # Arguments:
@@ -118,6 +135,7 @@ def download_manifest(manifest,destination,priorities,block_sz):
 # http_header = HTTP range to pull from the file, the other endpoints require 
 # this processing in the get_buffer() function.
 def get_url_obj(url,endpoint,http_header):
+
     if endpoint == "HTTP":
         res = ""
 
@@ -131,9 +149,13 @@ def get_url_obj(url,endpoint,http_header):
             return res
 
     if endpoint == "FTP":
-        ftp_loc = url.split('public-ftp.hmpdacc.org')[1]
-        if list(ftp.mlsd(ftp_loc)): # make sure there's something there
-            return url.split('public-ftp.hmpdacc.org')[1]
+        p = parse_ftp_url(url)
+        ftp = get_ftp_connection(p['host'])
+        if list(ftp.mlsd(p['file_path'])): # make sure there's something there
+            file_str = "RETR {0}".format(p['file_path'])
+            def get_data(callback, blocksize, start_pos):
+                ftp.retrbinary(file_str, callback, blocksize=blocksize, rest=start_pos)
+            return get_data
 
     elif endpoint == "S3":
         res = s3_get_key(url)
@@ -152,7 +174,9 @@ def get_file_size(url,endpoint):
         return int(urllib.request.urlopen(url).info()['Content-Length'])
 
     elif endpoint == 'FTP':
-        return ftp.size(url.split('public-ftp.hmpdacc.org')[1])
+        p = parse_ftp_url(url)
+        ftp = get_ftp_connection(p["host"])
+        return ftp.size(p["file_path"])
 
     elif endpoint == 'S3':
         k = s3_get_key(url)
@@ -171,7 +195,6 @@ def get_buffer(res,endpoint,block_sz,start_pos,max_range,file):
         return res.read(block_sz)
 
     elif endpoint == "FTP":
-
         current_byte = start_pos
 
         # The Python ftplib requires transfer to pass to a callback function,
@@ -187,7 +210,7 @@ def get_buffer(res,endpoint,block_sz,start_pos,max_range,file):
             current_byte += len(data)
             generate_status_message("{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / max_range))
 
-        ftp.retrbinary("RETR {0}".format(res),callback,blocksize=block_sz,rest=start_pos)
+        res(callback,block_sz,start_pos)
 
         return None
 
@@ -208,6 +231,7 @@ def s3_get_key(url):
     url = url.lstrip('s3://')
     bucket = url.split('/',1)[0]
     key = url.split('/',1)[1]
+    s3_conn = get_s3_connection()
     b = s3_conn.get_bucket(bucket)
     return b.get_key(key)
 
