@@ -68,7 +68,7 @@ Aspera's fast file transfer technology can be used for some of the
 files hosted by the iHMP DCC. The hmp_client does not yet directly
 handle downloads from FASP endpoints/URLs, however these files may be
 downloaded by using the Aspera *ascp* command-line utility, which can
-be downloaded from [the Aspera web site](http://downloads.asperasoft.com/en/downloads/2).
+be obtained from [the Aspera web site](http://downloads.asperasoft.com).
 
 Another Python script in this repository, *manifest2ascp.py*, will
 accept as input a manifest file and produce as output a shell script
@@ -86,7 +86,7 @@ It can be run with a command like the following, substituting in the appropriate
 This should generate a shell script called “ascp-commands.sh” that you
 can inspect and then run. By default it will download everything into
 the current directory, but using the same directory structure that’s
-present on the server. Some additional guidance on setting ascp
-parameters can be found here:
+present on the server. Some additional guidance on obtaining the ascp
+executable and tuning its command-line options can be found here:
 
 <http://ihmpdcc.org/resources/aspera.php>
