@@ -32,13 +32,16 @@ def url_to_manifest(url):
 # converts it into the manifest data structure expected for download_manifest().
 def tsv_to_manifest(tsv_object):
 
-    manifest = {}
+    manifest = []
+    ids = {}
 
     reader = csv.reader(tsv_object,delimiter="\t")
     next(reader,None) # skip the manifest header
 
     for row in reader:
-        manifest[row[0]] = {'md5':row[1],'urls':row[3]}
+        if row[0] not in ids:
+            manifest.append({'id':row[0],'md5':row[1],'urls':row[3]})
+            ids[row[0]] = 1
     
     return manifest
 
@@ -69,11 +72,14 @@ def token_to_manifest(token):
 
     files = res.split('\n')
 
-    manifest = {}
+    manifest = []
+    ids = {}
 
     for file in files:
         file_data = file.split('\t')
-        manifest[file_data[0]] = {'md5':file_data[1],'urls':file_data[2]}
+        if file_data[0] not in ids:
+            manifest.append({'id':file_data[0],'md5':file_data[1],'urls':file_data[2]})
+            ids[file_data[0]] = 1
 
     proxy = urllib.request.ProxyHandler({})
     opener = urllib.request.build_opener(proxy)

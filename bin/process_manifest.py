@@ -37,7 +37,7 @@ def parse_ftp_url(url):
 
 # Function to download each URL from the manifest.
 # Arguments:
-# manifest = manifest dict data structure created by functions in convert_to_manifest.py
+# manifest = manifest list created by functions in convert_to_manifest.py
 # destination = set destination to place output declared when calling client.py
 # priorities = endpoint priorities established by get_prioritized_endpoint
 # block_sz = the byte size to break the file into to allow for interrupted downloads
@@ -50,14 +50,14 @@ def download_manifest(manifest,destination,priorities,block_sz):
     failed_files = [] 
 
     # iterate over the manifest data structure, one ID/file at a time
-    for key in manifest: 
+    for mfile in manifest: 
 
-        url_list = get_prioritized_endpoint(manifest[key]['urls'],priorities)
+        url_list = get_prioritized_endpoint(mfile['urls'],priorities)
 
         # Handle private data or simply nodes that are not correct and lack 
         # endpoint data
         if not url_list:
-            print("No valid URL found in the manifest for file ID {0}".format(key))
+            print("No valid URL found in the manifest for file ID {0}".format(mfile['id']))
             failed_files.append(1)
             continue
 
@@ -90,7 +90,7 @@ def download_manifest(manifest,destination,priorities,block_sz):
                     break
 
             if res == "error": # if all attempts resulted in no object, move on to next file
-                print("skipping file ID {0} as none of the URLs checked {1} yielded a valid file".format(key,eps))
+                print("skipping file ID {0} as none of the URLs checked {1} yielded a valid file".format(mfile['id'],eps))
                 failed_files.append(2)
                 continue
 
@@ -116,7 +116,7 @@ def download_manifest(manifest,destination,priorities,block_sz):
                     generate_status_message("{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / file_size))
 
             # If the download is complete, establish the final file
-            if checksum_matches(tmp_file_name,manifest[key]['md5']):
+            if checksum_matches(tmp_file_name,mfile['md5']):
                 shutil.move(tmp_file_name,file_name)
                 failed_files.append(0)
             else:
