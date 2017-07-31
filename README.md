@@ -77,10 +77,10 @@ manifest. That script is in the bin/ subdirectory of this repository:
 
 [bin/manifest2ascp.py](bin/manifest2ascp.py)
 
-It can be run with a command like the following, substituting in the appropriate username, password and manifest file location:
+It can be run with a command like the following after substituting in the appropriate username, password, Aspera executable path, Aspera options, and manifest file location:
 
 ```
-./cart2ascp.py -manifest=hmp_cart_t2d_june_12_2017.tsv -user=username -password=password -ascp_options="-l 200M" > ascp-commands.sh
+./manifest2ascp.py -manifest=hmp_cart_t2d_june_12_2017.tsv -user=username -password=password -ascp_path /path/to/ascp/bin -ascp_options="-l 200M" > ascp-commands.sh
 ```
 
 This should generate a shell script called “ascp-commands.sh” that you
