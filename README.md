@@ -1,6 +1,6 @@
 # hmp_client
 
-Python-based client for downloading data files hosted by the Human Microbiome Data Analysis and Coordination Center (hmpdacc.org and ihmpdcc.org). The client accepts as input a *manifest file* that lists the files to be downloaded. Manifest files can be generated using the shopping cart in the query interface at http://portal.ihmpdcc.org.
+Python-based client for downloading data files hosted by the Human Microbiome Data Analysis and Coordination Center (hmpdacc.org). The client accepts as input a *manifest file* that lists the files to be downloaded. Manifest files can be generated using the shopping cart in the query interface at https://portal.hmpdacc.org.
 
 ## Running the client
 
@@ -20,7 +20,7 @@ cd Chiron
 ./bin/hmp_client_interactive
 ```
 
-This will download, build, and start the hmp_client Docker image and place you at a shell prompt inside the Docker image. From there the hmp_client program is available and can be run on a sample manifest file that's included in the image:
+This will download, build, and start the hmp_client Docker image and place you at a shell prompt inside the Docker container. From there the hmp_client program is available and can be run on a sample manifest file that's included in the image:
 
 ```
 root@dba147a35981:/# hmp_client -manifest /opt/hmp_client/test/hmp_cart_example.tsv 
@@ -80,7 +80,7 @@ manifest. That script is in the bin/ subdirectory of this repository:
 It can be run with a command like the following after substituting in the appropriate username, password, Aspera executable path, Aspera options, and manifest file location:
 
 ```
-./manifest2ascp.py -manifest=hmp_cart_t2d_june_12_2017.tsv -user=username -password=password -ascp_path /path/to/ascp/bin/ascp -ascp_options="-l 200M" > ascp-commands.sh
+./manifest2ascp.py -manifest=hmp_cart_t2d_june_12_2017.tsv --user=username --password=password --ascp_path /path/to/ascp/bin/ascp --ascp_options="-l 200M" > ascp-commands.sh
 ```
 
 This should generate a shell script called “ascp-commands.sh” that you
