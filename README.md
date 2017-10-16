@@ -15,9 +15,11 @@ There are 3 main ways to run the hmp_client:
 [Chiron](http://github.com/IGS/Chiron) is a collection of Dockerized tools and pipelines for metagenomics developed by the Human Microbiome Project members and originally used in the Microbiome Cloud Workshop held in Baltimore, Maryland in June of 2017. The hmp_client is installed in each of the Chiron Docker images. Using Chiron, the hmp_client Docker image, which contains the hmp_client and very little else, can be run like so:
 
 ```
-git clone https://github.com/IGS/Chiron.git
-cd Chiron
-./bin/hmp_client_interactive
+$ git clone https://github.com/IGS/Chiron.git
+
+$ cd Chiron
+
+$ ./bin/hmp_client_interactive
 ```
 
 This will download, build, and start the hmp_client Docker image and place you at a shell prompt inside the Docker container. From there the hmp_client program is available and can be run on a sample manifest file that's included in the image:
@@ -32,25 +34,25 @@ The client comes bundled with a Docker install that builds Python 3.6 as well as
 
 1. Invoke the Dockerfile to build. Change to the directory that contains the Dockerfile and then run this command:
 ```
-  docker build . -t python_src
+  $ docker build . -t python_src
 ```
 2. Now use the Docker image just built to create a container and run the client like so:
 ```
-   docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client -h
+  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client -h
 ```
 
 3. Test that it works by downloading a few small files to your current directory:
   * Basic functionality can be tested using the following example:
 ```
-   docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv
+  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv
 ```
   * If running on EC2, this will automatically be detected and S3 will be the preferred endpoint. Example:
 ```
-   docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv
+  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv
 ```
   * If you want to decide which endpoint to prioritize, you can pass it a single endpoint or a comma-separated list (e.g. 'HTTP' or 'HTTP,S3,FTP'). Example to override S3 prioritized endpoint on an EC2 instance:
 ```
-   docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv --endpoint_priority=HTTP
+  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv --endpoint_priority=HTTP
 ```
 ### 3. Installing the dependencies manually.
 
@@ -80,7 +82,7 @@ manifest. That script is in the bin/ subdirectory of this repository:
 It can be run with a command like the following after substituting in the appropriate username, password, Aspera executable path, Aspera options, and manifest file location:
 
 ```
-./manifest2ascp.py -manifest=hmp_cart_t2d_june_12_2017.tsv --user=username --password=password --ascp_path /path/to/ascp/bin/ascp --ascp_options="-l 200M" > ascp-commands.sh
+$ ./manifest2ascp.py -manifest=hmp_cart_t2d_june_12_2017.tsv --user=username --password=password --ascp_path /path/to/ascp/bin/ascp --ascp_options="-l 200M" > ascp-commands.sh
 ```
 
 This should generate a shell script called “ascp-commands.sh” that you
