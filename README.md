@@ -89,4 +89,4 @@ the current directory, but using the same directory structure that’s
 present on the server. Some additional guidance on obtaining the ascp
 executable and tuning its command-line options can be found here:
 
-<http://ihmpdcc.org/resources/aspera.php>
+<https://www.hmpdacc.org/hmp/resources/download.php>
