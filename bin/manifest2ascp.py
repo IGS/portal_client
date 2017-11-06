@@ -30,11 +30,11 @@ def format_time(s):
 def main():
     # command line arguments
     parser = argparse.ArgumentParser(description='Convert HMP Portal manifest file to a shell script containing ascp download commands.')
-    parser.add_argument('-manifest', type=str, required=True, help='Location of a locally stored manifest file from portal.ihmpdcc.org.')
-    parser.add_argument('-ascp_path', type=str, required=False, default=DFLT_ASCP_PATH, help='Path to Aspera ascp executable.')
-    parser.add_argument('-ascp_options', type=str, required=False, default=DFLT_ASCP_OPTIONS, help='Additional options to pass to ascp.')
-    parser.add_argument('-user', type=str, required=True, help='IGS-supplied Aspera username.')
-    parser.add_argument('-password', type=str, required=True, help='IGS-supplied Aspera password.')
+    parser.add_argument('-m', '--manifest', type=str, required=True, help='Location of a locally stored manifest file from portal.ihmpdcc.org.')
+    parser.add_argument('-a', '--ascp_path', type=str, required=False, default=DFLT_ASCP_PATH, help='Path to Aspera ascp executable.')
+    parser.add_argument('-o', '--ascp_options', type=str, required=False, default=DFLT_ASCP_OPTIONS, help='Additional options to pass to ascp.')
+    parser.add_argument('-u', '--user', type=str, required=True, help='IGS-supplied Aspera username.')
+    parser.add_argument('-p', '--password', type=str, required=True, help='IGS-supplied Aspera password.')
     args = parser.parse_args()
     
     print("#!/bin/bash")
