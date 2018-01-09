@@ -44,15 +44,15 @@ The client comes bundled with a Docker install that builds Python 3.6 as well as
 3. Test that it works by downloading a few small files to your current directory:
   * Basic functionality can be tested using the following example:
 ```
-  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv
+  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/ihmpdcc/hmp_client/master/test/hmp_cart_example.tsv
 ```
   * If running on EC2, this will automatically be detected and S3 will be the preferred endpoint. Example:
 ```
-  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv
+  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/ihmpdcc/hmp_client/master/test/hmp_cart_example.tsv
 ```
   * If you want to decide which endpoint to prioritize, you can pass it a single endpoint or a comma-separated list (e.g. 'HTTP' or 'HTTP,S3,FTP'). Example to override S3 prioritized endpoint on an EC2 instance:
 ```
-  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/jmatsumura/hmp_client/master/test/hmp_cart_example.tsv --endpoint_priority=HTTP
+  $ docker run -it --rm --name run-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp python_src bin/hmp_client --url=https://raw.githubusercontent.com/ihmpdcc/hmp_client/master/test/hmp_cart_example.tsv --endpoint_priority=HTTP
 ```
 ### 3. Installing the dependencies manually.
 
