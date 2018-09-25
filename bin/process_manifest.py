@@ -120,7 +120,7 @@ def download_manifest(manifest,destination,priorities,block_sz):
                 shutil.move(tmp_file_name,file_name)
                 failed_files.append(0)
             else:
-                print("\rMD5 check failed for the file ID {0} , data may be corrupted".format(key))
+                print("\rMD5 check failed for the file ID {0} , data may be corrupted".format(mfile['id']))
                 failed_files.append(3)
 
         else: # file already done downloading
