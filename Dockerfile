@@ -1,11 +1,17 @@
 # Basic Python3.6 install
-FROM ubuntu:yakkety
+FROM ubuntu:18.04
 
-RUN apt-get -y update && apt-get install -y python3.6 python3-pip
+ARG DEBIAN_FRONTEND=noninteractive
 
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+RUN apt-get update -y && apt-get install -y curl lsb-release gnupg git python3.6 python3-pip python3-boto
 
-RUN pip3 install boto
+RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
+    echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    apt-get update -y && apt-get install -y google-cloud-sdk
 
-CMD ["python3"]
+RUN cd /usr/local/bin && \
+    git clone https://github.com/IGS/portal_client && \
+    mv portal_client/bin/* .
+
+
