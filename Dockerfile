@@ -1,5 +1,5 @@
 # Basic Python3.6 install
-FROM ubuntu:yakkety
+FROM ubuntu:18.04
 
 RUN apt-get -y update && apt-get install -y python3.6 python3-pip
 
