@@ -20,7 +20,7 @@ class GCP(object):
         self.project_id = project_id
 
         if not (path.isfile(client_secrets_path) and os.access(client_secrets_path, os.R_OK)):
-            raise("File {} doesn't exist or isn't readable.".format(client_secrets_path))
+            raise Exception("File {} doesn't exist or isn't readable.".format(client_secrets_path))
 
         self.logger.debug("File {} exists as a file and is readable.".format(client_secrets_path))
 
@@ -52,7 +52,7 @@ class GCP(object):
         if gs_remote_path.startswith('gs://'):
             gs_remote_path = gs_remote_path[5:]
         else:
-            raise("Invalid google storage path. Must start with gs://")
+            raise Exception("Invalid google storage path. Must start with gs://")
 
         bucket_name = gs_remote_path.split('/')[0]
 
