@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""Wrapper Python script for running portal_client."""
+
+import portal_client
+ 
+if __name__ == '__main__':
+    portal_client.main()
