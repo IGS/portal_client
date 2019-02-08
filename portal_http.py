@@ -70,6 +70,7 @@ class PortalHTTP(object):
                     current_byte,
                     current_byte * 100 / file_size
                 )
+
                 self._generate_status_message(msg)
 
     # Get a network object of the file that can be iterated over.
