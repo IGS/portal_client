@@ -54,13 +54,22 @@ def parse_cli():
     )
 
     parser.add_argument(
-        '--client-secrets',
+        '--google-client-secrets',
         type=str,
         required=False,
-        default="",
+        dest='client_secrets',
         help='The path to a client secrets JSON file obtain from Google. ' + \
              'When using GCP (Google Cloud Platform) storage endpoints (' + \
              'urls that begin with "gs://"), this option is required.'
+    )
+
+    parser.add_argument(
+        '--google-project-id',
+        type=str,
+        required=False,
+        dest='project_id',
+        help='The Google project ID to use. When using GCP (Google ' + \
+              'Cloud Platform) storage endpoints, this option is required.'
     )
 
     parser.add_argument(
@@ -111,15 +120,15 @@ def parse_cli():
 
     return args
 
-def validate_cli():
-    if 'FASP'in endpoints and args.user == None:
+def validate_cli(args, endpoints):
+    if 'FASP' in endpoints and args.user is None:
         sys.stderr.write("Must specify username with --user when " + \
                          "retrieving data with aspera/fasp.\n")
         sys.exit(1)
 
-    if 'GS' in endpoints and args.client_secrets == None:
-        sys.stderr.write("Must specify --client-secrets files when " + \
-                         "retrieving google storage data.\n")
+    if 'GS' in endpoints and (args.client_secrets is None or args.project_id is None):
+        sys.stderr.write("Must specify both --google-client-secrets and " + \
+                         "--google-project-id when retrieving data from Google.\n")
         sys.exit(1)
 
 def main():
@@ -127,6 +136,8 @@ def main():
 
     if args.debug:
         set_logging()
+
+    logger = logging.getLogger()
 
     default_endpoint_priority = ['HTTP', 'FTP', 'S3']
     valid_endpoints = ['HTTP', 'FTP', 'S3', 'FASP', 'GS']
@@ -149,11 +160,15 @@ def main():
             if exception.errno != errno.EEXIST:
                 raise
 
-    validate_cli()
+    validate_cli(args, endpoints)
 
     username = args.user
     destination = args.destination
     password = None
+
+    # GCP Information
+    client_secrets = args.client_secrets
+    project_id = args.project_id
 
     if 'FASP' in endpoints and len(args.user) > 0:
         # Ask for the password
@@ -165,7 +180,9 @@ def main():
     attempts = 0
     result = []
 
-    mp = ManifestProcessor(username, password)
+    logger.debug("Creating ManifestProcessor.")
+    mp = ManifestProcessor(username, password,
+            google_client_secrets=client_secrets, google_project_id=project_id)
 
     while keep_trying:
         manifest = {}
@@ -177,6 +194,7 @@ def main():
         elif args.token:
             manifest = token_to_manifest(args.token)
 
+        logger.debug("About to start downloading manifest.")
 
         result = mp.download_manifest(
             manifest,
@@ -208,12 +226,13 @@ def main():
 # Outputs the results of those files that failed to download
 def retry_results_msg(file_count, failure_1, failure_2, failure_3):
 
-    msg = "\nNot all files in manifest (total of {0}) were downloaded successfully. Number of failures:\n" \
+    msg = "Not all files (total of {0}) were downloaded successfully. Number of failures:\n" \
         "{1} -- no valid URL in the manifest file\n" \
-        "{2} -- URL present in manifest, but not accessible at the location specified\n" \
-        "{3} -- MD5 checksum failed for file (file is corrupted or the wrong MD5 is attached to the file"
+        "{2} -- URL is present in manifest, but not accessible at the location specified\n" \
+        "{3} -- MD5 checksum failed for file (file is corrupted or the wrong MD5 is associated)"
 
-    print(msg.format(file_count,failure_1,failure_2,failure_3))
+    print()
+    print(msg.format(file_count, failure_1, failure_2, failure_3))
 
 if __name__ == '__main__':
     main()
