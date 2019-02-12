@@ -10,8 +10,11 @@ RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
     apt-get update -y && apt-get install -y google-cloud-sdk
 
-RUN cd /usr/local/bin && \
-    git clone https://github.com/IGS/portal_client && \
-    mv portal_client/bin/* .
+COPY lib /root/portal_client/lib/
+COPY portal_client /root/portal_client/
+COPY DESC /root/portal_client/
+COPY setup.py /root/portal_client/
 
+RUN cd /root/portal_client && \
+    pip3 install .
 
