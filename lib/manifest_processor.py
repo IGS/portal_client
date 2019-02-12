@@ -11,6 +11,8 @@ from portal_http import PortalHTTP
 from s3 import S3
 from ftp import PortalFTP
 
+from boto.utils import get_instance_metadata
+
 class ManifestProcessor(object):
 
     def __init__(self, username=None, password=None, google_client_secrets=None,
@@ -139,7 +141,6 @@ class ManifestProcessor(object):
         try:
             self.aws_s3.download_file(url, file_name)
         except Exception as e:
-            print("AHEM")
             self.logger.error(e)
             result = "error"
 
