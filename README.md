@@ -53,13 +53,13 @@ the -v option, and we are executing the client in the /tmp directory with the us
 of the -w option.
 
 ```bash
-docker run -v "$PWD:/tmp" -w /tmp -ti --rm portal_client portal_client --url=https://raw.githubusercontent.com/ihmpdcc/hmp_client/master/test/hmp_cart_example.tsv
+docker run -v "$PWD:/tmp" -w /tmp -ti --rm portal_client portal_client --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv
 ```
 
   * If running on EC2, this will automatically be detected and S3 will be the preferred endpoint. Example:
 
 ```bash
-docker run -ti --rm -v "$PWD":/tmp -w /tmp portal_client portal_client --url=https://raw.githubusercontent.com/ihmpdcc/hmp_client/master/test/hmp_cart_example.tsv
+docker run -ti --rm -v "$PWD":/tmp -w /tmp portal_client portal_client --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv
 ```
 
   * If you wish to control which protocol/endpoint to prioritize, you can pass
@@ -68,5 +68,5 @@ For example, to override the S3 prioritized endpoint on an AWS EC2 instance with
 the HTTP endpoint:
 
 ```bash
-docker run -ti --rm -v "$PWD:/tmp" -w /tmp portal_client portal_client --url=https://raw.githubusercontent.com/ihmpdcc/hmp_client/master/test/hmp_cart_example.tsv --endpoint_priority=HTTP
+docker run -ti --rm -v "$PWD:/tmp" -w /tmp portal_client portal_client --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv --endpoint-priority=HTTP
 ```
