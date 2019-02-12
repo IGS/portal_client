@@ -1,4 +1,6 @@
 .vscode
+build
+dist
 *.pyc
 __pycache__
 client_secrets.json
