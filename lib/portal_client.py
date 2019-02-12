@@ -27,7 +27,7 @@ def set_logging():
 
 def parse_cli():
     parser = argparse.ArgumentParser(
-        description='Client to download files given a manifest file ' +
+        description='Client to download files given a manifest file ' + \
                     'generated from a portal instance.'
     )
 
