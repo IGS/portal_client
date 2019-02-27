@@ -62,8 +62,12 @@ class ManifestProcessor(object):
         result = None
 
         try:
-            aspera.download_file(server, self.username, self.password,
+            success = aspera.download_file(server, self.username, self.password,
                 remote_path, file_name)
+
+            if not success:
+                self.logger.error("Aspera transfer failed.")
+                result = "error"
         except Exception as e:
             self.logger.error(e)
             result = "error"
@@ -174,7 +178,8 @@ class ManifestProcessor(object):
                 failed_files.append(1)
                 continue
 
-            file_name = "{0}/{1}".format(destination, url_list[0].split('/')[-1])
+            url_file_element = url_list[0].split('/')[-1]
+            file_name = os.path.join(destination, url_file_element)
 
             # only need to download if the file is not present
             if os.path.exists(file_name):
