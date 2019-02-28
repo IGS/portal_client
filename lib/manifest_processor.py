@@ -39,6 +39,10 @@ class ManifestProcessor(object):
 
         self.password = password
 
+        # By default, we will check MD5 checksums after each file is
+        # retrieved/downloaded.
+        self.validation = True
+
         if google_client_secrets is not None and google_project_id is not None:
             self.logger.info("Create GCP client.")
             from gcp import GCP
@@ -152,6 +156,15 @@ class ManifestProcessor(object):
 
         return result
 
+    # Method to turn off MD5 checksum checking after a file is downloaded.
+    # For large files and particularly with manifests that contain large
+    # numbers of large files, disabling validation may significantly boost
+    # performance.
+    def disable_validation(self):
+        self.logger.debug("In disable_validation.")
+
+        self.validation = False
+
     # Function to download each URL from the manifest.
     # Arguments:
     # manifest = manifest list created by functions in convert_to_manifest.py
@@ -221,17 +234,24 @@ class ManifestProcessor(object):
                     failed_files.append(2)
                     continue
 
-                # Now that the download is complete, verify the checksum, and then
-                # establish the final file
-                if self._checksum_matches(tmp_file_name, mfile['md5']):
+                if self.validation:
+                    # Now that the download is complete, verify the checksum, and then
+                    # establish the final file
+                    if self._checksum_matches(tmp_file_name, mfile['md5']):
+                        self.logger.debug("Renaming {} to {}".format(tmp_file_name, file_name))
+                        shutil.move(tmp_file_name, file_name)
+                        failed_files.append(0)
+                    else:
+                        print("\r")
+                        msg = "MD5 check failed for the file ID {0}. " + \
+                              "Data may be corrupted."
+                        print(msg.format(mfile['id']))
+                        failed_files.append(3)
+                else:
+                    self.logger.debug("Skipping checksumming. " + \
+                                      "Renaming {} to {}".format(tmp_file_name, file_name))
                     shutil.move(tmp_file_name, file_name)
                     failed_files.append(0)
-                else:
-                    print("\r")
-                    msg = "MD5 check failed for the file ID {0}. " + \
-                          "Data may be corrupted."
-                    print(msg.format(mfile['id']))
-                    failed_files.append(3)
 
         return failed_files
 

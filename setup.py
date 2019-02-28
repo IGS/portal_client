@@ -9,7 +9,7 @@ def read(fname):
 setup(name='portal-client',
       description='Download client tool for IGS Portal servers.',
       long_description=read('DESC'),
-      version='1.3.0',
+      version='1.4.0',
       py_modules=['portal_client'],
       author='Victor F',
       author_email='victor73@github.com',
