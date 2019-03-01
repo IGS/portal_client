@@ -43,7 +43,7 @@ protocol for downloads of URLS starting with http://, while FTP uses the File
 Transfer Protocol for ftp:// links, and S3 will fetch data from Amazon AWS
 Simple Storage Service (S3) buckets. If a download cannot be performed for
 a file with HTTP, and the file is available via S3 and FTP, by default, the
-client will next attempt and FTP transfer, followed finally by S3...
+client will next attempt an FTP transfer, followed finally by S3...
 
 ## 2. Basic invocation on Amazon AWS
 
