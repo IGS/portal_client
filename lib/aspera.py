@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """ Wrapper module for ascp usage. """
 
 import os
@@ -7,6 +5,7 @@ import re
 import subprocess
 import logging
 import sys
+import shutil
 
 # download example command(s):
 #
@@ -27,6 +26,18 @@ logger.addHandler(logging.NullHandler())
 
 ASCP_COMMAND = "ascp"
 ASCP_MIN_VERSION = '3.5'
+
+
+def is_ascp_installed():
+    logger.debug("In is_ascp_installed.")
+    ascp_path = shutil.which('ascp')
+
+    installed = False
+    if ascp_path is not None:
+        installed = True
+
+    logger.debug("Installed? {}".format(installed))
+    return installed
 
 # compare version numbers
 def version_cmp(v1, v2):

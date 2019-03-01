@@ -15,6 +15,9 @@ from convert_to_manifest import file_to_manifest
 from convert_to_manifest import url_to_manifest
 from convert_to_manifest import token_to_manifest
 
+logger = logging.getLogger()
+
+
 def set_logging():
     """ Setup logging. """
     root = logging.getLogger()
@@ -121,14 +124,28 @@ def parse_cli():
     return args
 
 def validate_cli(args, endpoints):
-    if 'FASP' in endpoints and args.user is None:
-        sys.stderr.write("Must specify username with --user when " + \
-                         "retrieving data with aspera/fasp.\n")
-        sys.exit(1)
+    logger.debug("In validate_cli.")
+    cli_error = False
+
+    if 'FASP' in endpoints:
+        import aspera
+        if not aspera.is_ascp_installed():
+            sys.stderr.write("The ASCP binary is not installed or available.\n")
+            sys.stderr.write("Please install it or adjust yor PATH.\n")
+            cli_error = True
+
+        if args.user is None:
+            sys.stderr.write("Must specify username with --user when " + \
+                             "retrieving data with aspera/fasp.\n")
+            cli_error = True
 
     if 'GS' in endpoints and (args.client_secrets is None or args.project_id is None):
         sys.stderr.write("Must specify both --google-client-secrets and " + \
                          "--google-project-id when retrieving data from Google.\n")
+        cli_error = True
+
+    if cli_error:
+        logger.error("Aborting execution.")
         sys.exit(1)
 
 def main():
@@ -136,8 +153,6 @@ def main():
 
     if args.debug:
         set_logging()
-
-    logger = logging.getLogger()
 
     default_endpoint_priority = ['HTTP', 'FTP', 'S3']
     valid_endpoints = ['HTTP', 'FTP', 'S3', 'FASP', 'GS']
@@ -169,12 +184,6 @@ def main():
     # GCP Information
     client_secrets = args.client_secrets
     project_id = args.project_id
-
-    if 'FASP' in endpoints and len(args.user) > 0:
-        # Ask for the password
-        password = getpass.getpass(
-            "Enter your password (Don't worry, it's not shown): "
-        )
 
     keep_trying = True
     attempts = 0
