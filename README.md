@@ -10,63 +10,153 @@ as an input. This file contains URLs to the files to be downloaded. Manifest
 files can be generated using the shopping cart functionality of the portal's
 query interface.
 
-## Installation
+## Usage
 
-There are 2 basic ways to install portal_client:
-
-1. Traditional installation
-2. Using Docker
-
-## 1. Traditional installation
-
-The portal client requires Python 3 and the Boto library:
-
-- [Python 3.6](https://www.python.org/downloads/release/python-361/)
-
-- [boto](https://pypi.python.org/pypi/boto)
-
-An easy way to install Python 3 and the necessary dependencies is to use Virtualenv.
-
-### 2. Using Docker
-
-The portal_client code comes bundled with a Dockerfile, which, when used, will
-build a docker image with Python 3.6 as well as the dependencies specific to
-the portal client. One can then use this Docker image to execute the client
-using the following steps:
-
-1. Build the image. Change to the directory containing the Dockerfile and execute:
+When properly installed, portal_client will be available for direct invocation
+from the command line. Running `which portal_client` should yield a result, and
+will show precisely where the script is installed. General usage is available
+by simply using the well-known `--help`, or `-h`.
 
 ```bash
-docker build -t portal_client .
+portal_client --help
 ```
 
-2. Use the built image to start a container and execute the client:
+This will output all the options that portal_client supports as well as a
+very brief explanation of what each option means and how it modifies the
+execution.
+
+## 1. Basic invocation
+
+The following command is the most basic way of invoking the client. Simply by
+specifying the path to a downloaded manifest file with the `-m`, or `--manfiest`
+option.
 
 ```bash
-docker run -ti --rm portal_client portal_client --help
+portal_client --manifest /path/to/my/manifest.tsv 
 ```
 
-3. Test the container by downloading a few small files. The command below should
-download two files to your current directory ($PWD). This works because we have
-mapped your current working directory to the /tmp directory in the container with
-the -v option, and we are executing the client in the /tmp directory with the use
-of the -w option.
+Since manifests can list multiple URLs for an entry (a file can be obtained
+from multiple sources), when using portal_client in this manner, it uses a
+default set of protocols to download the data in the manifest. These
+protocols are, in priority order: HTTP, FTP, and S3. HTTP uses the http
+protocol for downloads of URLS starting with http://, while FTP uses the File
+Transfer Protocol for ftp:// links, and S3 will fetch data from Amazon AWS
+Simple Storage Service (S3) buckets. If a download cannot be performed for
+a file with HTTP, and the file is available via S3 and FTP, by default, the
+client will next attempt and FTP transfer, followed finally by S3...
+
+## 2. Basic invocation on Amazon AWS
+
+In the special case of executing portal_client on an EC2 instance on Amazon
+AWS, it's faster and more economical to retrieve data from S3, since there
+are no egress charges applied to such transfer. Therefore, the portal_client
+is configured to automatically detect when it is invoked on Amazon infrastructure
+and move the S3 protocol to the highest priority ahead of HTTP and FTP. The
+endpoint priority when running on EC2 is therefore: S3, HTTP, FTP, as opposed
+to the normal priority of HTTP, FTP, S3.
+
+## 3. Altering the target directory
+
+By default, portal_client will download data to the same directory (the
+"working director"), that the user invoked portal_client from. To alter the
+location of where the data should be deposited, one must use the 
+`--destination` option:
+
+first be generated. Documentation for how that is accomplished is available
+from Google and is beyond the scope of this guide, but it is used to
+authorize the portal_client to access data in a Google storage bucket.
+Additionally, the ID of a valid Google project must also be specified with
+the `--google-project-id` option. A full example is below:
 
 ```bash
-docker run -v "$PWD:/tmp" -w /tmp -ti --rm portal_client portal_client --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv
+portal_client --manifest /path/to/my/manifest.tsv \
+  --destination /path/to/my/destination/directory
 ```
 
-  * If running on EC2, this will automatically be detected and S3 will be the preferred endpoint. Example:
+## 4. Overriding the default endpoint-priority
+
+Sometimes, it may be advantageous to override the default endpoints, and their
+priorities, that the portal_client will consider when downloading data. This is
+accomplished with the `--endpoint-priority` option.
 
 ```bash
-docker run -ti --rm -v "$PWD":/tmp -w /tmp portal_client portal_client --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv
+portal_client --manifest /path/to/my/manifest.tsv --endpoint-priority S3
 ```
 
-  * If you wish to control which protocol/endpoint to prioritize, you can pass
-a single endpoint or a comma-separated list (e.g. 'HTTP' or 'HTTP,S3,FTP').
-For example, to override the S3 prioritized endpoint on an AWS EC2 instance with
-the HTTP endpoint:
+In the above example, portal_client will NOT consider or attempt to download
+data from HTTP or FTP urls. It will only use s3:// urls. Any URLs that do NOT
+use the s3:// protocol will be skipped.
+
+## 5. Downloads using Aspera
+
+The portal_client includes support for downloading data via Aspera's propietary
+'fasp' protocol. This is a proprietary high-performance protocol that uses UDP packets.
+The `ascp` utility *must* be installed, and available, on the same system as the portal client, or an error will occur. Please check for the availablity of 'ascp'
+with `which`:
+
+```
+which ascp
+```
+
+One must also explicitly include 'FASP' in the endpoint priority listing. In
+addition, the portal_client will also require the user to specify a username
+with the `--user` option and will interactively prompt the user for their
+Aspera server credential. The password will NOT be echoed to the
+screen/terminal for security reasons. Example:
 
 ```bash
-docker run -ti --rm -v "$PWD:/tmp" -w /tmp portal_client portal_client --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv --endpoint-priority=HTTP
+portal_client --manifest /path/to/my/manifest.tsv \
+  --endpoint-priority FASP,HTTP \
+  --user myusername
 ```
+
+The above command will consider and download data from both fasp:// and http://
+urls, with preference given to Aspera.
+
+Failure to specify the `--user` option will result in an error message when
+'FASP' is used.
+
+## 6. Downloads from Google Cloud Platform (GCP)
+
+The portal_client is able to retrieve data from Google Cloud Storage buckets.
+Files in a google bucket, are addressable with URLs that begin with 'gs://',
+so if a manifest includes such URLs, one must enable the GS
+endpoint. 
+
+When accessing data in this manner from Google, a "client secrets" file must
+first be generated. Documentation for how that is accomplished is available
+from Google and is beyond the scope of this guide, but it is used to
+authorize the portal_client to access data in a Google storage bucket.
+Specify the path to the client secrets file with the
+`--google-client-secrets` option. Additionally, the ID of a valid Google
+project must also be specified with the `--google-project-id` option. A full
+example is below:
+
+```bash
+portal_client --manifest /path/to/my/manifest.tsv \
+  --endpoint-priority GS,HTTP \
+  --google-client-secrets /path/to/my/client-secrets.json \
+  --google-project-id my-google-project-id
+```
+
+## 7. Disabling checksum validation
+
+The portal_client usually verifies downloads after they happen by performing
+and MD5 checksum on the downloaded data, and comparing it to the checksums
+listed in the manifest file. However, if there is a mismatch, portal_client
+will consider the download to be corrupted, or failed, and will exit out
+with an error message. For very manifests that describe extremely large
+datasets, the checksumming operation can be very costly, or time consuming.
+To disable the checksum validation, simply pass an extra `--disable-validation`
+Example:
+
+```bash
+portal_client --disable-validation --manifest /path/to/my/manifest.tsv
+```
+
+## 8. Debug mode
+
+Users can see verbose additional information when executing portal_client by
+passing the `--debug` option. This will typically result in a large amount of
+output and can be used to trace where problems may be occuring. This output is
+frequently used by developers when troubleshooting.
