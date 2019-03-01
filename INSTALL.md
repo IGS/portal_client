@@ -19,7 +19,8 @@ python libraries:
 - [google-cloud-storage](https://pypi.org/project/google-cloud-storage/)
 
 An easy way to install Python 3 and the necessary dependencies is to use VirtualEnv and
-pip (or pip3 on some systems).
+pip (or pip3 on some systems). The following commands assume you already have VirtualEnv
+installed on your system and the portal_client software downloaded.
 
 1. Create a virtual environment
 
