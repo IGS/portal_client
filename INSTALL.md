@@ -24,10 +24,14 @@ pip (or pip3 on some systems).
 1. Create a virtual environment
 
 ```bash
-virtualenv portal_client
+virtualenv /path/to/venvs/portal_client
 ```
 
 2. Activate the virtual environment
+
+```bash
+source /path/to/venvs/portal_client/bin/activate
+```
 
 3. Install the portal_client into the virtual environment
 
