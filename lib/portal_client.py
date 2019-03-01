@@ -34,22 +34,27 @@ def parse_cli():
                     'generated from a portal instance.'
     )
 
-    group = parser.add_mutually_exclusive_group(required=True)
-
-    group.add_argument(
+    parser.add_argument(
         '-m', '--manifest',
         type=str,
         help='Location of a locally stored manifest file from.'
     )
 
-    group.add_argument(
+    parser.add_argument(
         '-u', '--url',
         type=str,
         required=False,
         help='URL path to a manifest file stored at an HTTP endpoint.'
     )
 
-    group.add_argument(
+    parser.add_argument(
+        '--disable-validation',
+        dest='disable_validation',
+        action='store_true',
+        help='Disable MD5 checksum validation.'
+    )
+
+    parser.add_argument(
         '-t', '--token',
         type=str,
         required=False,
@@ -192,6 +197,11 @@ def main():
     logger.debug("Creating ManifestProcessor.")
     mp = ManifestProcessor(username, password,
             google_client_secrets=client_secrets, google_project_id=project_id)
+
+    # Turn off MD5 checksumming if specified by the user
+    if args.disable_validation:
+        logger.debug("Turning off checksum validation.")
+        mp.disable_validation()
 
     while keep_trying:
         manifest = {}

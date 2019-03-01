@@ -70,7 +70,7 @@ class PortalFTP(object):
 
         if host not in self.connections:
             ftp = FTP(host)
-            ftp.login('portal_client')
+            ftp.login()
             self.connections[host] = ftp
 
         conn = self.connections[host]
@@ -88,7 +88,7 @@ class PortalFTP(object):
         ftp = self._get_ftp_connection(parsed['host'])
 
         # make sure there's something there
-        if list(ftp.mlsd(parsed['file_path'])):
+        if list(ftp.nlst(parsed['file_path'])):
             file_str = "RETR {0}".format(parsed['file_path'])
 
             def get_data(callback, blocksize, start_pos):
@@ -107,8 +107,10 @@ class PortalFTP(object):
 
         parsed = self._parse_ftp_url(url)
         ftp = self._get_ftp_connection(parsed["host"])
-
-        return ftp.size(parsed["file_path"])
+        ftp.sendcmd("TYPE i")
+        file_size = ftp.size(parsed["file_path"])
+        self.logger.debug("size is: " + str(file_size))
+        return file_size
 
     # Function to retrieve a particular set of bytes from the file.
     # Arguments:
