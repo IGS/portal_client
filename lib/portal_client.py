@@ -28,10 +28,21 @@ def set_logging():
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
+def version():
+    import pkg_resources
+    version = pkg_resources.get_distribution('portal_client').version
+    return version
+
 def parse_cli():
     parser = argparse.ArgumentParser(
         description='Client to download files given a manifest file ' + \
                     'generated from a portal instance.'
+    )
+
+    parser.add_argument(
+        '--version',
+        action='version',
+        version='%(prog)s ' + version()
     )
 
     parser.add_argument(

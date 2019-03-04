@@ -1,0 +1,56 @@
+portal_client 1.4.2
+
+ * Corrections to setup.py.
+ * Addition of --version option.
+
+ - Victor <victor73@github.com>  Sun, 03 Mar 2019 18:00:00 -0400
+
+portal_client 1.4.1
+
+ * Additional clarification about the virtualenv creation.
+ * Separate installation document and new readme.
+ * Checking for ascp being in the path when FASP endpoint is used.
+
+ - Victor <victor73@github.com>  Fri, 01 Mar 2019 12:28:00 -0400
+
+portal_client 1.4.0
+
+ * Fixes FTP downloads for NCBI SRA FTP urls.
+ * Adds new feature, --disable-validation, to turn off/disable MD5 checksum
+   validation to boost performance for large files/transfers (or when MD5
+   information is incorrect or unavailable).
+
+ - Victor <victor73@github.com>  Fri, 01 Mar 2019 12:26:00 -0400
+
+portal_client 1.3.0
+
+ * Fixes problem with destination path using /, instead of os.path.join().
+
+ - Victor <victor73@github.com>  Thu, 28 Feb 2019 15:00:00 -0400
+
+portal_client 1.2.0
+
+ * Major refactoring in several classes.
+ * Replacement to the ihmpdcc/hmp_client project.
+
+ - Victor <victor73@github.com>  Sun, 10 Feb 2019 10:06:00 -0400
+
+portal_client 1.2
+
+ * Updated documentation.
+ * New FASP (Aspera) functionality.
+
+ - jmatsumura <jmatsumura@github.com>  Wed, 14 Jun 2017 14:33:00 -0400
+
+portal_client 1.1
+
+ * Adding in a basic, but very convenient feature for creating a directory if
+   it does not already exist.
+
+ - jmatsumura <jmatsumura@github.com>  Tue, 13 Jun 2017 16:57:00 -0400
+
+portal_client 1.0
+
+ * Initial release.
+
+ - jmatsumura <jmatsumura@github.com>  Wed, 07 Jun 2017 16:17:00 -0400

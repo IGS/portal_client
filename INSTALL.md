@@ -1,11 +1,11 @@
 # Installation
 
-There are 2 basic ways to install portal_client:
+There are several ways to install portal_client:
 
-1. Traditional installation
-2. Using Docker
-
-## 1. Traditional installation
+1. Using easy_install
+2. Using pip
+3. Using VirtualEnv
+4. Using Docker
 
 The portal client requires Python 3, the Boto library, and two Google
 python libraries:
@@ -18,9 +18,62 @@ python libraries:
 
 - [google-cloud-storage](https://pypi.org/project/google-cloud-storage/)
 
-An easy way to install Python 3 and the necessary dependencies is to use VirtualEnv and
-pip (or pip3 on some systems). The following commands assume you already have VirtualEnv
-installed on your system and the portal_client software downloaded.
+
+## Using easy_install
+
+Download or clone the portal_client code from github.
+
+  <pre>
+  $ cd portal_client
+  </pre>
+
+Then one can simply use easy_install. If you have root privileges:
+
+  <pre>
+  # easy_install .
+  </pre>
+
+or with sudo:
+
+  <pre>
+  $ sudo easy_install .
+  </pre>
+
+If you are performing a non-root installation, you can still use easy_install. First,
+pick an installation directory. In this example we'll use /tmp. Then add the installation
+directory to your PYTHONPATH environment variable if it isn't already there:
+
+  <pre>
+  $ export PYTHONPATH=$PYTHONPATH:/tmp
+  </pre>
+
+Then invoke easy_install with the --install-dir option. Note the final '.', which tells
+easy_install where to look for the setup.py script.
+
+  <pre>
+  $ easy_install --install-dir /tmp .
+  </pre>
+  
+## Using pip
+
+Another tool that is commonly used to install Python modules is pip. To use pip to 
+install portal_client, download the source code as shown above, then invoke pip as root or using
+sudo:
+
+  <pre>
+  $ cd portal_client
+  </pre>
+
+  <pre>
+  $ sudo pip3 install .
+  </pre>
+
+## Using VirtualEnv
+
+An easy way to install portal_client and the necessary dependencies is to use
+VirtualEnv and pip (or pip3 on some systems). The following commands assume you
+already have VirtualEnv installed on your system and the portal_client software
+downloaded.
 
 1. Create a virtual environment
 
@@ -36,7 +89,8 @@ source /path/to/venvs/portal_client/bin/activate
 
 3. Install the portal_client into the virtual environment
 
-Switch back to your download of portal_client and execute pip3 install as follows:
+Switch back to your download of portal_client and execute pip3 install as
+follows:
 
 ```bash
 pip3 install .
@@ -44,9 +98,9 @@ pip3 install .
 
 This will retrieve and install the dependencies as well.
 
-### 2. Using Docker
+## Using Docker
 
-The portal_client code comes bundled with a Dockerfile, which, when used, will
+The portal_client code comes with a Dockerfile, which, when used, will
 build a docker image with Python 3.6 as well as the dependencies specific to
 the portal client. One can then use this Docker image to execute the client
 using the following steps:
@@ -70,13 +124,15 @@ the -v option, and we are executing the client in the /tmp directory with the us
 of the -w option.
 
 ```bash
-docker run -v "$PWD:/tmp" -w /tmp -ti --rm portal_client portal_client --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv
+docker run -v "$PWD:/tmp" -w /tmp -ti --rm portal_client portal_client \
+    --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv
 ```
 
   * If running on EC2, this will automatically be detected and S3 will be the preferred endpoint. Example:
 
 ```bash
-docker run -ti --rm -v "$PWD":/tmp -w /tmp portal_client portal_client --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv
+docker run -ti --rm -v "$PWD":/tmp -w /tmp portal_client portal_client \
+    --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv
 ```
 
   * If you wish to control which protocol/endpoint to prioritize, you can pass
@@ -85,5 +141,7 @@ For example, to override the S3 prioritized endpoint on an AWS EC2 instance with
 the HTTP endpoint:
 
 ```bash
-docker run -ti --rm -v "$PWD:/tmp" -w /tmp portal_client portal_client --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv --endpoint-priority=HTTP
+docker run -ti --rm -v "$PWD:/tmp" -w /tmp portal_client portal_client \
+     --endpoint-priority=HTTP \
+    --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv 
 ```
