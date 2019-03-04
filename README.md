@@ -28,7 +28,7 @@ execution.
 ## 1. Basic invocation
 
 The following command is the most basic way of invoking the client. Simply by
-specifying the path to a downloaded manifest file with the `-m`, or `--manfiest`
+specifying the path to a downloaded manifest file with the `-m`, or `--manifest`
 option.
 
 ```bash
