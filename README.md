@@ -32,15 +32,15 @@ specifying the path to a downloaded manifest file with the `-m`, or `--manifest`
 option.
 
 ```bash
-portal_client --manifest /path/to/my/manifest.tsv 
+portal_client --manifest /path/to/my/manifest.tsv
 ```
 
 Since manifests can list multiple URLs for an entry (a file can be obtained
 from multiple sources), when using portal_client in this manner, it uses a
 default set of protocols to download the data in the manifest. These
 protocols are, in priority order: HTTP, FTP, and S3. HTTP uses the http
-protocol for downloads of URLS starting with http://, while FTP uses the File
-Transfer Protocol for ftp:// links, and S3 will fetch data from Amazon AWS
+protocol for downloads of URLS starting with `http://`, while FTP uses the File
+Transfer Protocol for `ftp://` links, and S3 will fetch data from Amazon AWS
 Simple Storage Service (S3) buckets. If a download cannot be performed for
 a file with HTTP, and the file is available via S3 and FTP, by default, the
 client will next attempt an FTP transfer, followed finally by S3...
@@ -59,7 +59,7 @@ to the normal priority of HTTP, FTP, S3.
 
 By default, portal_client will download data to the same directory (the
 "working director"), that the user invoked portal_client from. To alter the
-location of where the data should be deposited, one must use the 
+location of where the data should be deposited, one must use the
 `--destination` option:
 
 first be generated. Documentation for how that is accomplished is available
@@ -84,17 +84,18 @@ portal_client --manifest /path/to/my/manifest.tsv --endpoint-priority S3
 ```
 
 In the above example, portal_client will NOT consider or attempt to download
-data from HTTP or FTP urls. It will only use s3:// urls. Any URLs that do NOT
-use the s3:// protocol will be skipped.
+data from HTTP or FTP urls. It will only use `s3://` urls. Any URLs that do NOT
+use the `s3://` protocol will be skipped.
 
 ## 5. Downloads using Aspera
 
-The portal_client includes support for downloading data via Aspera's propietary
-'fasp' protocol. This is a proprietary high-performance protocol that uses UDP packets.
-The `ascp` utility *must* be installed, and available, on the same system as the portal client, or an error will occur. Please check for the availablity of 'ascp'
-with `which`:
+The portal_client includes support for downloading data via Aspera's
+propietary 'fasp' protocol. This is a proprietary high-performance protocol
+that uses UDP packets. The `ascp` utility *must* be installed, and available,
+on the same system as the portal client, or an error will occur. Please check
+for the availablity of 'ascp' with `which`:
 
-```
+```bash
 which ascp
 ```
 
@@ -110,8 +111,8 @@ portal_client --manifest /path/to/my/manifest.tsv \
   --user myusername
 ```
 
-The above command will consider and download data from both fasp:// and http://
-urls, with preference given to Aspera.
+The above command will consider and download data from both `fasp://` and
+`http://` urls, with preference given to Aspera.
 
 Failure to specify the `--user` option will result in an error message when
 'FASP' is used.
@@ -119,9 +120,9 @@ Failure to specify the `--user` option will result in an error message when
 ## 6. Downloads from Google Cloud Platform (GCP)
 
 The portal_client is able to retrieve data from Google Cloud Storage buckets.
-Files in a google bucket, are addressable with URLs that begin with 'gs://',
+Files in a google bucket, are addressable with URLs that begin with `gs://`,
 so if a manifest includes such URLs, one must enable the GS
-endpoint. 
+endpoint.
 
 When accessing data in this manner from Google, a "client secrets" file must
 first be generated. Documentation for how that is accomplished is available
