@@ -1,11 +1,12 @@
-# Handles the downloading of the manifest contents.
+"""
+Handles the downloading of the manifest contents.
+"""
 
-import aspera
 import hashlib
 import logging
 import os
 import shutil
-import sys
+import aspera
 
 from portal_http import PortalHTTP
 from s3 import S3
@@ -16,7 +17,7 @@ from boto.utils import get_instance_metadata
 class ManifestProcessor(object):
 
     def __init__(self, username=None, password=None, google_client_secrets=None,
-            google_project_id=None, blocksize=100000):
+                 google_project_id=None, blocksize=100000):
         """
         Constructor for the ManifestProcessor class.
         """
@@ -49,25 +50,25 @@ class ManifestProcessor(object):
             self.gcp_client = GCP(google_project_id, google_client_secrets)
 
     def _get_fasp_obj(self, url, file_name):
-        self.logger.debug("In _get_fasp_obj: {}".format(url))
+        self.logger.debug("In _get_fasp_obj: %s", url)
 
         if url.startswith('fasp://'):
             url = url[7:]
 
-        self.logger.debug("url: {}".format(url))
+        self.logger.debug("URL: %s", url)
 
         server = url.split('/')[0]
-        self.logger.debug("Aspera server: {}".format(server))
+        self.logger.debug("Aspera server: %s", server)
 
         remote_path = url
         remote_path = remote_path.lstrip(server)
-        self.logger.debug("Remote path: {}".format(remote_path))
+        self.logger.debug("Remote path: %s", remote_path)
 
         result = None
 
         try:
             success = aspera.download_file(server, self.username, self.password,
-                remote_path, file_name)
+                                           remote_path, file_name)
 
             if not success:
                 self.logger.error("Aspera transfer failed.")
@@ -76,12 +77,12 @@ class ManifestProcessor(object):
             self.logger.error(e)
             result = "error"
 
-        self.logger.debug("Returning {}".format(result))
+        self.logger.debug("Returning %s", result)
 
         return result
 
     def _get_gcp_obj(self, url, file_name):
-        self.logger.debug("In _get_gcp_obj: {}".format(url))
+        self.logger.debug("In _get_gcp_obj: %s", url)
 
         if not url.startswith('gs://'):
             self.logger.error("Detected an invalid GCP url.")
@@ -95,7 +96,7 @@ class ManifestProcessor(object):
             self.logger.error(e)
             result = "error"
 
-        self.logger.debug("Returning {}".format(result))
+        self.logger.debug("Returning %s", result)
 
         return result
 
@@ -114,7 +115,7 @@ class ManifestProcessor(object):
             self.logger.error(e)
             result = "error"
 
-        self.logger.debug("Returning {}".format(result))
+        self.logger.debug("Returning %s", result)
 
         return result
 
@@ -156,24 +157,28 @@ class ManifestProcessor(object):
 
         return result
 
-    # Method to turn off MD5 checksum checking after a file is downloaded.
-    # For large files and particularly with manifests that contain large
-    # numbers of large files, disabling validation may significantly boost
-    # performance.
     def disable_validation(self):
+        """
+        Method to turn off MD5 checksum checking after a file is downloaded.
+        For large files and particularly with manifests that contain large
+        numbers of large files, disabling validation may significantly boost
+        performance.
+        """
         self.logger.debug("In disable_validation.")
 
         self.validation = False
 
-    # Function to download each URL from the manifest.
-    # Arguments:
-    # manifest = manifest list created by functions in convert_to_manifest.py
-    # destination = set destination to place output declared when calling client.py
-    # priorities = endpoint priorities established by get_prioritized_endpoint
     def download_manifest(self, manifest, destination, priorities):
+        """
+        Downloads each URL from the manifest.
+        Arguments:
+        manifest = manifest list
+        destination = the destination directory to save downloaded files
+        priorities = the protocol priorities
+        """
         self.logger.debug("In download_manifest.")
 
-        # build a list of elements to indicate how many and why the files failed
+        # Build a list of elements to indicate how many and why the files failed
         # 1 = no valid URL in manifest
         # 2 = URL exists, but not accessible at the location specified
         # 3 = MD5 check failed for file (file is corrupted or the wrong MD5 is attached to the file)
@@ -194,7 +199,7 @@ class ManifestProcessor(object):
             url_file_element = url_list[0].split('/')[-1]
             file_name = os.path.join(destination, url_file_element)
 
-            # only need to download if the file is not present
+            # Only need to download if the file is not present
             if os.path.exists(file_name):
                 self.logger.info("File {} already exists. Skipping.".format(file_name))
                 failed_files.append(0)
@@ -235,8 +240,8 @@ class ManifestProcessor(object):
                     continue
 
                 if self.validation:
-                    # Now that the download is complete, verify the checksum, and then
-                    # establish the final file
+                    # Now that the download is complete, verify the checksum,
+                    # and then establish the final file
                     if self._checksum_matches(tmp_file_name, mfile['md5']):
                         self.logger.debug("Renaming {} to {}".format(tmp_file_name, file_name))
                         shutil.move(tmp_file_name, file_name)
@@ -273,10 +278,11 @@ class ManifestProcessor(object):
 
             md = get_instance_metadata(timeout=0.5, num_retries=1)
 
-            if len(md.keys()) > 0:
-                eps = ['S3','HTTP','FTP']
+            if md:
+                eps = ['S3', 'HTTP', 'FTP']
             else:
-                eps = ['HTTP','FTP','S3'] # if none provided, use this order
+                # If none provided, use this order
+                eps = ['HTTP', 'FTP', 'S3']
 
         # Go through and build a list starting with the higher priorities first.
         for ep in eps:
@@ -292,7 +298,7 @@ class ManifestProcessor(object):
     # file_path = location of the file just downloaded which requires an integrity check
     # original_md5 = MD5 provided by OSDF data
     def _checksum_matches(self, file_path, original_md5):
-        self.logger.debug("In checksum_matches. Checking {}.".format(file_path))
+        self.logger.debug("In checksum_matches. Checking %s.", file_path)
         md5 = hashlib.md5()
 
         # Read the file in chunks and build a final MD5
@@ -304,6 +310,6 @@ class ManifestProcessor(object):
         if md5.hexdigest() == original_md5:
             valid = True
 
-        self.logger.debug("Checksum valid? {}".format(valid))
+        self.logger.debug("Checksum valid? %s", str(valid))
 
         return valid
