@@ -1,10 +1,15 @@
+"""
+Handles the downloading of data from FTP sites.
+"""
+
 import os
 import logging
-from os import path
-import sys
 from ftplib import FTP
 
-class PortalFTP(object):
+class PortalFTP:
+    """
+    The PortalFTP class provides for simple retrieval of data from FTP servers.
+    """
     def __init__(self, blocksize=100000):
         """
         Constructor for the PortalFTP class.
@@ -19,7 +24,11 @@ class PortalFTP(object):
         self.connections = {}
 
     def download_file(self, url, local_path):
-        self.logger.debug("In download_file. URL: {}".format(url))
+        """
+        Given a remote FTP file's URL, download it and save it to the specified
+        local path.
+        """
+        self.logger.debug("In download_file. URL: %s", url)
 
         if not url.startswith('ftp://'):
             raise Exception("Invalid FTP url. Must start with ftp://")
@@ -34,10 +43,10 @@ class PortalFTP(object):
             current_byte = os.path.getsize(local_path)
 
             if current_byte < remote_file_size:
-                self.logger.warn("The local file is smaller than the remote one.")
+                self.logger.warning("The local file is smaller than the remote one.")
                 self._handle_chunked_download(url, local_path, current_byte, remote_file_size)
             elif current_byte > remote_file_size:
-                self.logger.warn("The local file is LARGER than the remote one! Skipping.")
+                self.logger.warning("The local file is LARGER than the remote one! Skipping.")
             else:
                 # sizes must be equal
                 self.logger.info("File already present. Skipping.")
@@ -45,9 +54,9 @@ class PortalFTP(object):
             self._handle_chunked_download(url, local_path, current_byte, remote_file_size)
 
     def _handle_chunked_download(self, url, file_name, current_byte, file_size):
-        self.logger.debug("In _handle_chunked_download: {}".format(url))
+        self.logger.debug("In _handle_chunked_download: %s", url)
 
-        res = self._get_url_obj(url, current_byte)
+        res = self._get_url_obj(url)
 
         blocksize = self.blocksize
 
@@ -59,14 +68,14 @@ class PortalFTP(object):
             )
 
             if blocksize > file_size:
-                self._generate_status_message("block size greater than " + \
+                _generate_status_message("block size greater than " + \
                     "total file size. Pulling in entire file.")
 
-            buffer = self._get_buffer(res, current_byte, file_size, file)
+            self._get_buffer(res, current_byte, file_size, file)
 
 
     def _get_ftp_connection(self, host):
-        self.logger.debug("In _get_ftp_connection. Host: {}".format(host))
+        self.logger.debug("In _get_ftp_connection. Host: %s", host)
 
         if host not in self.connections:
             ftp = FTP(host)
@@ -81,13 +90,13 @@ class PortalFTP(object):
     # Arguments:
     # url = path to location of the file on the web
     # current_byte = The byte position to retrieve data from
-    def _get_url_obj(self, url, current_byte):
-        self.logger.debug("In _get_url_obj: {}".format(url))
+    def _get_url_obj(self, url):
+        self.logger.debug("In _get_url_obj: %s", url)
 
         parsed = self._parse_ftp_url(url)
         ftp = self._get_ftp_connection(parsed['host'])
 
-        # make sure there's something there
+        # Make sure there's something there
         if list(ftp.nlst(parsed['file_path'])):
             file_str = "RETR {0}".format(parsed['file_path'])
 
@@ -109,7 +118,9 @@ class PortalFTP(object):
         ftp = self._get_ftp_connection(parsed["host"])
         ftp.sendcmd("TYPE i")
         file_size = ftp.size(parsed["file_path"])
-        self.logger.debug("size is: " + str(file_size))
+
+        self.logger.debug("Size is: %s", str(file_size))
+
         return file_size
 
     # Function to retrieve a particular set of bytes from the file.
@@ -131,14 +142,14 @@ class PortalFTP(object):
             file.write(data)
 
             current_byte += len(data)
-            self._generate_status_message("{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / max_range))
+            _generate_status_message("{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / max_range))
 
         res(callback, self.blocksize, start_pos)
 
         return None
 
     def _parse_ftp_url(self, url):
-        self.logger.debug("In _parse_ftp_url.")
+        self.logger.debug("In _parse_ftp_url: %s", url)
 
         dest = url.split('//')[1]
         host = dest.split('/')[0]
@@ -146,11 +157,11 @@ class PortalFTP(object):
 
         return {'dest': dest, 'host': host, 'file_path': file_path}
 
-    # Function to output a status message to the user.
-    # Argument:
-    # message = the string to temporarily output to the user
-    def _generate_status_message(self, message):
-        status = message
-        # backspace everything
-        status = status + chr(8) * (len(status) + 1)
-        print("\r{0}".format(status), end="")
+# Function to output a status message to the user.
+# Argument:
+# message = the string to temporarily output to the user
+def _generate_status_message(message):
+    status = message
+    # backspace everything
+    status = status + chr(8) * (len(status) + 1)
+    print("\r{0}".format(status), end="")

@@ -10,7 +10,7 @@ setup(
     name='portal-client',
     description='Download client tool for IGS Portal servers.',
     long_description=read('DESC'),
-    version='1.4.2',
+    version='1.4.3',
     py_modules=['portal_client'],
     author='Victor F',
     author_email='victor73@github.com',
