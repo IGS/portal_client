@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-# The portal client downloads data from the portal instance when provided with
-# a manifest file (locally stored or at a URL/FTP endpoint)
+# The portal client downloads data from a portal instance when provided with
+# a manifest file (locally stored or at an HTTP endpoint)
 
 import argparse
-import getpass
 import logging
 import os
 import errno
@@ -17,38 +16,69 @@ from convert_to_manifest import token_to_manifest
 
 logger = logging.getLogger()
 
+def obtain_password():
+    """
+    Interactively obtain the user's password (securely).
+    """
+    logger.debug("In obtain_password.")
+    import getpass
+
+    print("Enter your password: (masked)")
+    password = getpass.getpass('')
+
+    return password
 
 def set_logging():
-    """ Setup logging. """
+    """
+    Setup logging.
+    """
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
-def version():
+def get_version():
+    """
+    Determine the version of the installed portal_client.
+    """
     import pkg_resources
-    version = pkg_resources.get_distribution('portal_client').version
+
+    version = None
+
+    try:
+        version = pkg_resources.get_distribution('portal_client').version
+    except Exception:
+        logger.warning("Unable to determine version.")
+        version = "?"
+
     return version
 
 def parse_cli():
+    """
+    Establishes the CLI interface by defining the parameter names and
+    what types of data they accept. Creates the command line parser
+    and parses the command line arguments.
+    """
     parser = argparse.ArgumentParser(
-        description='Client to download files given a manifest file ' + \
+        description='Client to download data described by a manifest file ' + \
                     'generated from a portal instance.'
     )
 
     parser.add_argument(
         '--version',
         action='version',
-        version='%(prog)s ' + version()
+        version='%(prog)s ' + get_version()
     )
 
     parser.add_argument(
         '-m', '--manifest',
         type=str,
-        help='Location of a locally stored manifest file from.'
+        help='Location of a locally stored manifest file.'
     )
 
     parser.add_argument(
@@ -137,9 +167,17 @@ def parse_cli():
 
     args = parser.parse_args()
 
+    # This is later populated if the user specifies the --user argument.
+    args.password = None
+
     return args
 
 def validate_cli(args, endpoints):
+    """
+    Determine if the user has invoked the tool properly based on what
+    endpoints, if any, were specified. Different endpoints have different
+    requirements (for authentication), so invocations can vary.
+    """
     logger.debug("In validate_cli.")
     cli_error = False
 
@@ -160,11 +198,31 @@ def validate_cli(args, endpoints):
                          "--google-project-id when retrieving data from Google.\n")
         cli_error = True
 
+    if args.user is not None:
+        password = obtain_password()
+        args.password = password
+
     if cli_error:
         logger.error("Aborting execution.")
         sys.exit(1)
 
+def retry_results_msg(file_count, failure_1, failure_2, failure_3):
+    """
+    Outputs the results of those files that failed to download.
+    """
+
+    msg = "Not all files (total of {0}) were downloaded successfully. Number of failures:\n" \
+        "{1} -- no valid URL in the manifest file\n" \
+        "{2} -- URL is present in manifest, but not accessible at the location specified\n" \
+        "{3} -- MD5 checksum failed for file (file is corrupted or the wrong MD5 is associated)"
+
+    print()
+    print(msg.format(file_count, failure_1, failure_2, failure_3))
+
 def main():
+    """
+    The entrypoint into the portal_client code.
+    """
     args = parse_cli()
 
     if args.debug:
@@ -179,7 +237,7 @@ def main():
         for endpoint in endpoints:
             if endpoint not in valid_endpoints:
                 sys.stderr.write("Error: Invalid protocol. Please check " + \
-                    "the endpoint-priority option for valid entries.\n");
+                    "the endpoint-priority option for valid entries.\n")
                 sys.exit(1)
     else:
         endpoints = default_endpoint_priority
@@ -195,7 +253,7 @@ def main():
 
     username = args.user
     destination = args.destination
-    password = None
+    password = args.password
 
     # GCP Information
     client_secrets = args.client_secrets
@@ -207,7 +265,8 @@ def main():
 
     logger.debug("Creating ManifestProcessor.")
     mp = ManifestProcessor(username, password,
-            google_client_secrets=client_secrets, google_project_id=project_id)
+                           google_client_secrets=client_secrets,
+                           google_project_id=project_id)
 
     # Turn off MD5 checksumming if specified by the user
     if args.disable_validation:
@@ -252,17 +311,6 @@ def main():
                 # Never going to get anywhere if no URLs are present
                 if result.count(1) == len(result):
                     keep_trying = False
-
-# Outputs the results of those files that failed to download
-def retry_results_msg(file_count, failure_1, failure_2, failure_3):
-
-    msg = "Not all files (total of {0}) were downloaded successfully. Number of failures:\n" \
-        "{1} -- no valid URL in the manifest file\n" \
-        "{2} -- URL is present in manifest, but not accessible at the location specified\n" \
-        "{3} -- MD5 checksum failed for file (file is corrupted or the wrong MD5 is associated)"
-
-    print()
-    print(msg.format(file_count, failure_1, failure_2, failure_3))
 
 if __name__ == '__main__':
     main()

@@ -101,7 +101,7 @@ class ManifestProcessor(object):
         return result
 
     def _get_ftp_obj(self, url, file_name):
-        self.logger.debug("In _get_ftp_obj: {}".format(url))
+        self.logger.debug("In _get_ftp_obj: %s", url)
 
         if not url.startswith('ftp://'):
             self.logger.error("Detected an invalid FTP url.")
@@ -120,7 +120,7 @@ class ManifestProcessor(object):
         return result
 
     def _get_http_obj(self, url, file_name):
-        self.logger.debug("In _get_http_obj: {}".format(url))
+        self.logger.debug("In _get_http_obj: %s", url)
 
         if not (url.startswith('http://') or url.startswith('https://')):
             self.logger.error("Detected an invalid HTTP/HTTPS url.")
@@ -134,12 +134,12 @@ class ManifestProcessor(object):
             self.logger.error(e)
             result = "error"
 
-        self.logger.debug("Returning {}".format(result))
+        self.logger.debug("Returning %s", result)
 
         return result
 
     def _get_s3_obj(self, url, file_name):
-        self.logger.debug("In _get_s3_obj: {}".format(url))
+        self.logger.debug("In _get_s3_obj: %s", url)
 
         if not url.startswith('s3://'):
             self.logger.error("Detected an invalid Amazon S3 url.")
@@ -153,7 +153,7 @@ class ManifestProcessor(object):
             self.logger.error(e)
             result = "error"
 
-        self.logger.debug("Returning {}".format(result))
+        self.logger.debug("Returning %s", result)
 
         return result
 
@@ -201,7 +201,7 @@ class ManifestProcessor(object):
 
             # Only need to download if the file is not present
             if os.path.exists(file_name):
-                self.logger.info("File {} already exists. Skipping.".format(file_name))
+                self.logger.info("File %s already exists. Skipping.", file_name)
                 failed_files.append(0)
             else:
                 self.logger.debug("File not present. Proceeding.")
@@ -235,7 +235,7 @@ class ManifestProcessor(object):
                 # If all attempts resulted in error, move on to next file
                 if res == "error":
                     print("Skipping file ID {0} as none of the URLs {1} succeeded."
-                        .format(mfile['id'], endpoints))
+                          .format(mfile['id'], endpoints))
                     failed_files.append(2)
                     continue
 
@@ -243,7 +243,7 @@ class ManifestProcessor(object):
                     # Now that the download is complete, verify the checksum,
                     # and then establish the final file
                     if self._checksum_matches(tmp_file_name, mfile['md5']):
-                        self.logger.debug("Renaming {} to {}".format(tmp_file_name, file_name))
+                        self.logger.debug("Renaming %s to %s", tmp_file_name, file_name)
                         shutil.move(tmp_file_name, file_name)
                         failed_files.append(0)
                     else:
@@ -253,8 +253,9 @@ class ManifestProcessor(object):
                         print(msg.format(mfile['id']))
                         failed_files.append(3)
                 else:
-                    self.logger.debug("Skipping checksumming. " + \
-                                      "Renaming {} to {}".format(tmp_file_name, file_name))
+                    self.logger.debug(
+                        "Skipping checksumming. Renaming %s to %s", tmp_file_name, file_name
+                    )
                     shutil.move(tmp_file_name, file_name)
                     failed_files.append(0)
 

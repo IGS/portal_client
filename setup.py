@@ -1,16 +1,20 @@
+""" Setup for the portal_client module. """
+
 import os
 
 from setuptools import setup
 
-# Utility function to read files. Used for the long_description.
 def read(fname):
+    """
+    Utility function to read files. Used for the long_description.
+    """
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
     name='portal-client',
     description='Download client tool for IGS Portal servers.',
     long_description=read('DESC'),
-    version='1.4.3',
+    version='1.4.4',
     py_modules=['portal_client'],
     author='Victor F',
     author_email='victor73@github.com',

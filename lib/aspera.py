@@ -27,8 +27,10 @@ logger.addHandler(logging.NullHandler())
 ASCP_COMMAND = "ascp"
 ASCP_MIN_VERSION = '3.5'
 
-
 def is_ascp_installed():
+    """
+    Determine if the Aspera 'ascp' utility is installed and available for use.
+    """
     logger.debug("In is_ascp_installed.")
     ascp_path = shutil.which('ascp')
 
@@ -36,10 +38,9 @@ def is_ascp_installed():
     if ascp_path is not None:
         installed = True
 
-    logger.debug("Installed? {}".format(installed))
+    logger.debug("Installed? %s", installed)
     return installed
 
-# compare version numbers
 def version_cmp(v1, v2):
     """
     Compare version/release numbers.
@@ -50,13 +51,14 @@ def version_cmp(v1, v2):
         return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
 
     if sys.version_info[0] == 2:
-        return cmp(normalize(v1), normalize(v2))
+        # pylint: disable=E0602
+        result = cmp(normalize(v1), normalize(v2))
     else:
         nv1 = normalize(v1)
         nv2 = normalize(v2)
         result = (nv1 > nv2) - (nv1 < nv2)
 
-        return result
+    return result
 
 def get_ascp_version():
     """
@@ -109,9 +111,11 @@ def get_ascp_env(password):
     if 'ASPERA_SCP_PASS' in environment:
         logger.info("Honoring previously set ASPERA_SCP_PASS environment variable.")
     else:
-        if password != None:
+        if password is not None:
             logger.info("Setting ASPERA_SCP_PASS environment variable.")
             environment['ASPERA_SCP_PASS'] = password
+        else:
+            logger.warning("Password isn't set!")
 
     return environment
 
@@ -152,10 +156,12 @@ def run_ascp(ascp_cmd, password, keyfile=None):
             if re.match(r"^.*failed to authenticate", s_err):
                 logger.error("Aspera authentication failure.")
             else:
-                if s_err != None:
+                if s_err is not None:
                     logger.error("Unexpected STDERR from ascp: %s", s_err)
-                if s_out != None:
+
+                if s_out is not None:
                     logger.error("Unexpected STDOUT from ascp: %s", s_out)
+
     except subprocess.CalledProcessError as cpe:
         logger.error("Encountered an error when running ascp: %s", cpe)
 
@@ -187,9 +193,9 @@ def upload_file(server, username, password, local_file, remote_path,
     logger.debug("In upload_file.")
     check_ascp_version()
 
-    # check that local file exists
+    # Check that local file exists
     if not os.path.isfile(local_file):
-        logger.warn("local file " + local_file + " does not exist")
+        logger.warning("Local file %s does not exist.", local_file)
         return False
 
     remote_clause = username + "@" + server + ":" + remote_path

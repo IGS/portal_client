@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD033 -->
 # Installation
 
 There are several ways to install portal_client:
@@ -17,7 +18,6 @@ python libraries:
 - [google-auth-oauthlib](https://pypi.org/project/google-auth-oauthlib/)
 
 - [google-cloud-storage](https://pypi.org/project/google-cloud-storage/)
-
 
 ## Using easy_install
 
@@ -39,16 +39,17 @@ or with sudo:
   $ sudo easy_install .
   </pre>
 
-If you are performing a non-root installation, you can still use easy_install. First,
-pick an installation directory. In this example we'll use /tmp. Then add the installation
-directory to your PYTHONPATH environment variable if it isn't already there:
+If you are performing a non-root installation, you can still use
+easy_install. First, pick an installation directory. In this example we'll
+use /tmp. Then add the installation directory to your PYTHONPATH environment
+variable if it isn't already there:
 
   <pre>
   $ export PYTHONPATH=$PYTHONPATH:/tmp
   </pre>
 
-Then invoke easy_install with the --install-dir option. Note the final '.', which tells
-easy_install where to look for the setup.py script.
+Then invoke easy_install with the --install-dir option. Note the final '.',
+which tells easy_install where to look for the setup.py script.
 
   <pre>
   $ easy_install --install-dir /tmp .
@@ -56,9 +57,9 @@ easy_install where to look for the setup.py script.
   
 ## Using pip
 
-Another tool that is commonly used to install Python modules is pip. To use pip to 
-install portal_client, download the source code as shown above, then invoke pip as root or using
-sudo:
+Another tool that is commonly used to install Python modules is pip. To use
+pip to install portal_client, download the source code as shown above, then
+invoke pip as root or using sudo:
 
   <pre>
   $ cd portal_client
@@ -143,5 +144,5 @@ the HTTP endpoint:
 ```bash
 docker run -ti --rm -v "$PWD:/tmp" -w /tmp portal_client portal_client \
      --endpoint-priority=HTTP \
-    --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv 
+    --url=https://raw.githubusercontent.com/IGS/portal_client/master/example_manifests/example_manifest.tsv
 ```
