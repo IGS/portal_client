@@ -219,7 +219,7 @@ class ManifestProcessor(object):
                         res = self._get_fasp_obj(url, tmp_file_name)
                     elif endpoint == "GS":
                         res = self._get_gcp_obj(url, tmp_file_name)
-                    elif endpoint == "HTTP":
+                    elif endpoint == "HTTP" or endpoint == "HTTPS":
                         res = self._get_http_obj(url, tmp_file_name)
                     elif endpoint == "FTP":
                         res = self._get_ftp_obj(url, tmp_file_name)
