@@ -39,11 +39,12 @@ Since manifests can list multiple URLs for an entry (a file can be obtained
 from multiple sources), when using portal_client in this manner, it uses a
 default set of protocols to download the data in the manifest. These
 protocols are, in priority order: HTTP, FTP, and S3. HTTP uses the http
-protocol for downloads of URLS starting with `http://`, while FTP uses the File
-Transfer Protocol for `ftp://` links, and S3 will fetch data from Amazon AWS
-Simple Storage Service (S3) buckets. If a download cannot be performed for
-a file with HTTP, and the file is available via S3 and FTP, by default, the
-client will next attempt an FTP transfer, followed finally by S3...
+protocol for downloads of URLS starting with `http://` or `https://`, while
+FTP uses the File Transfer Protocol for `ftp://` links, and S3 will fetch
+data from Amazon AWS Simple Storage Service (S3) buckets. If a download
+cannot be performed for a file with HTTP, and the file is available via S3
+and FTP, by default, the client will next attempt an FTP transfer, followed
+finally by S3...
 
 ## 2. Basic invocation on Amazon AWS
 
