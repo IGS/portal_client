@@ -1,10 +1,9 @@
 # portal_client
 
-Python-based client for downloading data files hosted by the an instance of
-the portal software developed by the GDC and further modified by the
+Python-based client for downloading data files hosted by the
 Institute for Genome Sciences (IGS). There are several portals running on the
-internet to support various research efforts. Notably, the Human Microbiome
-Project Data Analysis and Coordination Center (hmpdacc.org) uses the portal
+internet to support various research efforts. Notably, the Neuroscience Multi-omic Archive (NeMO, https://nemoarchive.org/) and the Human Microbiome
+Project Data Analysis and Coordination Center (hmpdacc.org) use the portal
 to enable data exploration and download. The client accepts a *manifest file*
 as an input. This file contains URLs to the files to be downloaded. Manifest
 files can be generated using the shopping cart functionality of the portal's
@@ -15,14 +14,14 @@ query interface.
 When properly installed, portal_client will be available for direct invocation
 from the command line. Running `which portal_client` should yield a result, and
 will show precisely where the script is installed. General usage is available
-by simply using the well-known `--help`, or `-h`.
+by running `--help`, or `-h`.
 
 ```bash
 portal_client --help
 ```
 
-This will output all the options that portal_client supports as well as a
-very brief explanation of what each option means and how it modifies the
+This will output all the options that portal_client supports as well as a 
+brief explanation of what each option means and how it modifies the
 execution.
 
 ## 1. Basic invocation
@@ -59,15 +58,9 @@ to the normal priority of HTTP, FTP, S3.
 ## 3. Altering the target directory
 
 By default, portal_client will download data to the same directory (the
-"working director"), that the user invoked portal_client from. To alter the
+"working directory"), that the user invoked portal_client from. To alter the
 location of where the data should be deposited, one must use the
 `--destination` option:
-
-first be generated. Documentation for how that is accomplished is available
-from Google and is beyond the scope of this guide, but it is used to
-authorize the portal_client to access data in a Google storage bucket.
-Additionally, the ID of a valid Google project must also be specified with
-the `--google-project-id` option. A full example is below:
 
 ```bash
 portal_client --manifest /path/to/my/manifest.tsv \
@@ -91,7 +84,7 @@ use the `s3://` protocol will be skipped.
 ## 5. Downloads using Aspera
 
 The portal_client includes support for downloading data via Aspera's
-propietary 'fasp' protocol. This is a proprietary high-performance protocol
+proprietary 'fasp' protocol. This is a proprietary high-performance protocol
 that uses UDP packets. The `ascp` utility *must* be installed, and available,
 on the same system as the portal client, or an error will occur. Please check
 for the availablity of 'ascp' with `which`:
@@ -127,7 +120,7 @@ endpoint.
 
 When accessing data in this manner from Google, a "client secrets" file must
 first be generated. Documentation for how that is accomplished is available
-from Google and is beyond the scope of this guide, but it is used to
+from Google ([Link](https://developers.google.com/identity/protocols/oauth2/web-server#creatingcred)) and is beyond the scope of this guide, but it is used to
 authorize the portal_client to access data in a Google storage bucket.
 Specify the path to the client secrets file with the
 `--google-client-secrets` option. Additionally, the ID of a valid Google
@@ -148,7 +141,7 @@ and MD5 checksum on the downloaded data, and comparing it to the checksums
 listed in the manifest file. However, if there is a mismatch, portal_client
 will consider the download to be corrupted, or failed, and will exit out
 with an error message. For very manifests that describe extremely large
-datasets, the checksumming operation can be very costly, or time consuming.
+datasets, the checksumming operation can be very time consuming.
 To disable the checksum validation, simply pass an extra `--disable-validation`
 Example:
 
@@ -160,5 +153,4 @@ portal_client --disable-validation --manifest /path/to/my/manifest.tsv
 
 Users can see verbose additional information when executing portal_client by
 passing the `--debug` option. This will typically result in a large amount of
-output and can be used to trace where problems may be occuring. This output is
-frequently used by developers when troubleshooting.
+output and can be used to trace where problems may be occuring.
