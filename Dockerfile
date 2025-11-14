@@ -1,20 +1,23 @@
-# Basic Python3.6 install
-FROM ubuntu:18.04
+FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update -y && apt-get install -y curl lsb-release gnupg git python3.6 python3-pip python3-boto
+RUN apt-get update -y && apt-get install -y curl lsb-release gnupg git python3.12 python3-pip python3-boto3 python3-requests python3-venv
 
-RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
-    echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
-    apt-get update -y && apt-get install -y google-cloud-sdk
+# Add the Google Cloud SDK APT repository
+RUN curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+        > /etc/apt/sources.list.d/google-cloud-sdk.list
 
-COPY lib /root/portal_client/lib/
-COPY portal_client /root/portal_client/
-COPY DESC /root/portal_client/
-COPY setup.py /root/portal_client/
+# Create keyring and import key (modern, preferred method)
+RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+      | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
 
-RUN cd /root/portal_client && \
-    pip3 install .
+RUN mkdir /root/portal-client
+COPY lib /root/portal-client/lib/
+COPY portal-client pyproject.toml /root/portal-client/
+COPY DESC CHANGES /root/portal-client/
 
+RUN python3 -m venv /root/portal-client-venv && \
+    cd /root/portal-client && \
+    /root/portal-client-venv/bin/pip3 install .

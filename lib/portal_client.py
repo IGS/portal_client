@@ -9,10 +9,8 @@ import os
 import errno
 import sys
 
-from manifest_processor import ManifestProcessor
-from convert_to_manifest import file_to_manifest
-from convert_to_manifest import url_to_manifest
-from convert_to_manifest import token_to_manifest
+from .manifest_processor import ManifestProcessor
+from .convert_to_manifest import file_to_manifest, url_to_manifest
 
 logger = logging.getLogger()
 
@@ -46,12 +44,11 @@ def get_version():
     """
     Determine the version of the installed portal_client.
     """
-    import pkg_resources
 
-    version = None
+    from importlib.metadata import version
 
     try:
-        version = pkg_resources.get_distribution('portal_client').version
+        version = version("portal_client")
     except Exception:
         logger.warning("Unable to determine version.")
         version = "?"
@@ -100,16 +97,6 @@ def parse_cli():
         type=str,
         required=False,
         help='Token string generated for a cart from portal.ihmpdcc.org.'
-    )
-
-    parser.add_argument(
-        '--google-client-secrets',
-        type=str,
-        required=False,
-        dest='client_secrets',
-        help='The path to a client secrets JSON file obtain from Google. ' + \
-             'When using GCP (Google Cloud Platform) storage endpoints (' + \
-             'urls that begin with "gs://"), this option is required.'
     )
 
     parser.add_argument(
@@ -172,6 +159,7 @@ def parse_cli():
 
     return args
 
+
 def validate_cli(args, endpoints):
     """
     Determine if the user has invoked the tool properly based on what
@@ -182,7 +170,7 @@ def validate_cli(args, endpoints):
     cli_error = False
 
     if 'FASP' in endpoints:
-        import aspera
+        from . import aspera
         if not aspera.is_ascp_installed():
             sys.stderr.write("The ASCP binary is not installed or available.\n")
             sys.stderr.write("Please install it or adjust yor PATH.\n")
@@ -192,10 +180,11 @@ def validate_cli(args, endpoints):
             sys.stderr.write("Must specify username with --user when " + \
                              "retrieving data with aspera/fasp.\n")
             cli_error = True
+    from pprint import pprint
+    pprint(endpoints)
 
-    if 'GS' in endpoints and (args.client_secrets is None or args.project_id is None):
-        sys.stderr.write("Must specify both --google-client-secrets and " + \
-                         "--google-project-id when retrieving data from Google.\n")
+    if 'GS' in endpoints and args.project_id is None:
+        sys.stderr.write("Must --google-project-id when retrieving data from Google.\n")
         cli_error = True
 
     if args.user is not None:
@@ -206,7 +195,7 @@ def validate_cli(args, endpoints):
         logger.error("Aborting execution.")
         sys.exit(1)
 
-def retry_results_msg(file_count, failure_1, failure_2, failure_3):
+def retry_results_msg(file_count: int, failure_1: int, failure_2: int, failure_3: int):
     """
     Outputs the results of those files that failed to download.
     """
@@ -228,7 +217,7 @@ def main():
     if args.debug:
         set_logging()
 
-    default_endpoint_priority = ['HTTP', 'FTP', 'S3']
+    default_endpoint_priority = ['HTTP', 'GS', 'S3', 'FTP']
     valid_endpoints = ['HTTP', 'FTP', 'S3', 'FASP', 'GS']
 
     if args.endpoint_priority != "":
@@ -256,16 +245,14 @@ def main():
     password = args.password
 
     # GCP Information
-    client_secrets = args.client_secrets
     project_id = args.project_id
 
     keep_trying = True
-    attempts = 0
-    result = []
+    attempt = 0
+    failed_files = []
 
     logger.debug("Creating ManifestProcessor.")
     mp = ManifestProcessor(username, password,
-                           google_client_secrets=client_secrets,
                            google_project_id=project_id)
 
     # Turn off MD5 checksumming if specified by the user
@@ -280,36 +267,34 @@ def main():
             manifest = file_to_manifest(args.manifest)
         elif args.url:
             manifest = url_to_manifest(args.url)
-        elif args.token:
-            manifest = token_to_manifest(args.token)
 
         logger.debug("About to start downloading manifest.")
 
-        result = mp.download_manifest(
+        failed_files = mp.download_manifest(
             manifest,
             destination,
             args.endpoint_priority
         )
 
-        if len(result) == 0 or result.count(0) == len(result):
+        if len(failed_files) == 0 or failed_files.count(0) == len(failed_files):
             # No failures found
             keep_trying = False
         else:
             retry_results_msg(
-                len(result),
-                result.count(1),
-                result.count(2),
-                result.count(3)
+                len(failed_files),
+                failed_files.count(1),
+                failed_files.count(2),
+                failed_files.count(3)
             )
 
-            if attempts == args.retries:
+            if attempt == args.retries:
                 keep_trying = False
             else:
-                attempts += 1
-                print("Initiating download attempt number {}...\n".format(attempts))
+                attempt += 1
+                print(f"Initiating download attempt number {attempt}...\n")
 
                 # Never going to get anywhere if no URLs are present
-                if result.count(1) == len(result):
+                if failed_files.count(1) == len(failed_files):
                     keep_trying = False
 
 if __name__ == '__main__':

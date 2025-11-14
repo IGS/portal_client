@@ -3,7 +3,7 @@
 
 """Wrapper Python script for running portal_client."""
 
-import portal_client
+from lib.portal_client import main
  
 if __name__ == '__main__':
-    portal_client.main()
+    main()

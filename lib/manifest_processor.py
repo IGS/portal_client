@@ -5,19 +5,18 @@ Handles the downloading of the manifest contents.
 import hashlib
 import logging
 import os
+import requests
 import shutil
-import aspera
+from . import aspera
+from .portal_http import PortalHTTP
+from .s3 import S3
+from .ftp import PortalFTP
 
-from portal_http import PortalHTTP
-from s3 import S3
-from ftp import PortalFTP
-
-from boto.utils import get_instance_metadata
 
 class ManifestProcessor(object):
+    ON_AWS = None
 
-    def __init__(self, username=None, password=None, google_client_secrets=None,
-                 google_project_id=None, blocksize=100000):
+    def __init__(self, username=None, password=None, google_project_id=None, blocksize=100000):
         """
         Constructor for the ManifestProcessor class.
         """
@@ -44,10 +43,31 @@ class ManifestProcessor(object):
         # retrieved/downloaded.
         self.validation = True
 
-        if google_client_secrets is not None and google_project_id is not None:
+        if google_project_id is not None:
             self.logger.info("Create GCP client.")
-            from gcp import GCP
-            self.gcp_client = GCP(google_project_id, google_client_secrets)
+            from .gcp import GCP
+            self.gcp_client = GCP(google_project_id)
+
+
+    def _get_instance_metadata(self):
+        self.logger.debug("In _get_instance_metadata")
+
+        # Get IMDSv2 session token
+        token = requests.put(
+            "http://169.254.169.254/latest/api/token",
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
+            timeout=1,
+        ).text
+
+        # Get metadata (example: instance-id)
+        metadata = requests.get(
+            "http://169.254.169.254/latest/meta-data/",
+            headers={"X-aws-ec2-metadata-token": token},
+            timeout=1,
+        ).text
+
+        return metadata
+
 
     def _get_fasp_obj(self, url, file_name):
         self.logger.debug("In _get_fasp_obj: %s", url)
@@ -234,8 +254,7 @@ class ManifestProcessor(object):
 
                 # If all attempts resulted in error, move on to next file
                 if res == "error":
-                    print("Skipping file ID {0} as none of the URLs {1} succeeded."
-                          .format(mfile['id'], endpoints))
+                    print(f"Skipping file ID {mfile['id']} as none of the URLs {endpoints} succeeded.")
                     failed_files.append(2)
                     continue
 
@@ -266,7 +285,7 @@ class ManifestProcessor(object):
     # Arguments:
     # manifest_urls = the CSV set of endpoint URLs
     # priorities = priorities declared when calling client.py
-    def _get_prioritized_endpoint(self, manifest_urls, priorities):
+    def _get_prioritized_endpoint(self, manifest_urls: str, priorities):
         self.logger.debug("In _get_prioritized_endpoint.")
         url_list = []
 
@@ -275,15 +294,22 @@ class ManifestProcessor(object):
 
         # If the user didn't provide a set of priorities, then prioritize based on
         # whether on an EC2 instance.
-        if eps[0] == "":
+        if ManifestProcessor.ON_AWS is None:
+            if eps[0] == "":
+                md = None
+                try:
+                    md = self._get_instance_metadata()
+                except:
+                    ON_AWS = False
+                    self.logger.info("No instance metadata from AWS.")
 
-            md = get_instance_metadata(timeout=0.5, num_retries=1)
-
-            if md:
-                eps = ['S3', 'HTTP', 'FTP']
-            else:
-                # If none provided, use this order
-                eps = ['HTTP', 'FTP', 'S3']
+                if md is not None:
+                    ManifestProcessor.ON_AWS = True
+                    eps = ['S3', 'HTTP', 'FTP']
+                else:
+                    # If none provided, use this order
+                    ManifestProcessor.ON_AWS = False
+                    eps = ['HTTP', 'FTP', 'S3']
 
         # Go through and build a list starting with the higher priorities first.
         for ep in eps:

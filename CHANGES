@@ -1,3 +1,15 @@
+portal_client 1.5.0
+
+ * Dropped support for older pythons. Requires 3.11 or better.
+ * Abandoned setup.py for the more modern pyproject.toml file.
+ * Reworked the GCP method of downloading from buckets to just
+   rely on ADC. No more secrets/credentials files and simpler
+   CLI.
+ * Updated Dockerfile
+ * Changed the name of the CLI tool to portal-client.
+
+ - Victor <victor73@github.com>  Tue, 28 Oct 2025 12:00:00 -0400
+
 portal_client 1.4.4
 
  * Fixed authentication handling when processing manifests with

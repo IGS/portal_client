@@ -3,8 +3,10 @@ import logging
 from os import path
 import sys
 
-import boto
-from boto.utils import get_instance_metadata
+import boto3
+from botocore import UNSIGNED
+from botocore.client import Config
+
 
 class S3(object):
     def __init__(self, blocksize=100000):
@@ -18,7 +20,7 @@ class S3(object):
         self.blocksize = blocksize
 
         # Estalish an anonymous connection to S3 with boto
-        self.connection = boto.connect_s3(anon=True)
+        self.connection = boto3.client('s3', config=Config(signature_version=UNSIGNED))
 
     def download_file(self, s3_remote_path, local_path):
         self.logger.debug("In download_file.")
