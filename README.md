@@ -116,7 +116,7 @@ Aspera server credential. The password will NOT be echoed to the
 screen/terminal for security reasons. Example:
 
 ```bash
-$ portal_client --manifest /path/to/my/manifest.tsv \
+$ portal-client --manifest /path/to/my/manifest.tsv \
   --endpoint-priority FASP,HTTP \
   --user myusername
 ```
