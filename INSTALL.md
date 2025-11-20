@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD033 -->
 # Installation
 
-There are several ways to install portal-client:
+There are mainly two separate ways to install portal-client:
 
 1. Using pip
 2. Using VirtualEnv
