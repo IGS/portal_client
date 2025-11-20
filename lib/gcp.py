@@ -46,7 +46,7 @@ class GCP:
         self.logger.debug("Bucket name: %s", bucket_name)
         self.logger.debug("Object path: %s", obj_path)
 
-        bucket = self.client.get_bucket(bucket_name)
+        bucket = self.client.bucket(bucket_name)
 
         blob = bucket.blob(obj_path)
 

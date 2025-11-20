@@ -1,3 +1,8 @@
+portal_client 1.5.1
+ * Using the client bucket() method instead of get_bucket()
+
+ - Victor <victor73@github.com>  Thu, 20 Nov 2025 12:00:00 -0400
+
 portal_client 1.5.0
 
  * Dropped support for older pythons. Requires 3.11 or better.
