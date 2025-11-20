@@ -56,10 +56,15 @@ When accessing data from Google using this tool, Application Default Credentials
 (ADC) are used instead of a client secrets file. ADC assumes that the Google
 Cloud SDK (gcloud) is installed and that the user has already authenticated via
 `gcloud auth login`. This authentication allows portal-client to access data in
-Google Cloud Storage without requiring additional credential files.
+Google Cloud Storage without requiring additional credential files. For the project
+id, it is used internally by the SDK to associate API calls with a project for quota
+tracking. It does not need to be the proejct that owns the bucket, but you must have
+at least minimal access to that project (e.g., viewer role), otherwise the SDK may
+throw a serviceusage error.
 
 ```bash
 $ portal-client --manifest /path/to/my/manifest.tsv \
+                --google-project-id <PROJECT ID> \
                 --endpoint-priority GS,HTTP
 ```
 
