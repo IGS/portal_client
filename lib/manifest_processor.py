@@ -12,9 +12,31 @@ from .portal_http import PortalHTTP
 from .s3 import S3
 from .ftp import PortalFTP
 
+logger = logging.getLogger(__name__)
+
+def is_running_on_aws():
+    """
+    Check whether the current environment is an AWS EC2 instance
+    by querying the EC2 instance metadata service (IMDSv2).
+    """
+    logger.debug("Checking for AWS EC2 instance metadata.")
+
+    token = requests.put(
+        "http://169.254.169.254/latest/api/token",
+        headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
+        timeout=1,
+    ).text
+
+    requests.get(
+        "http://169.254.169.254/latest/meta-data/",
+        headers={"X-aws-ec2-metadata-token": token},
+        timeout=1,
+    )
+
+    return True
+
 
 class ManifestProcessor(object):
-    ON_AWS = None
 
     def __init__(self, username=None, password=None, google_project_id=None, blocksize=100000):
         """
@@ -47,26 +69,6 @@ class ManifestProcessor(object):
             self.logger.info("Create GCP client.")
             from .gcp import GCP
             self.gcp_client = GCP(google_project_id)
-
-
-    def _get_instance_metadata(self):
-        self.logger.debug("In _get_instance_metadata")
-
-        # Get IMDSv2 session token
-        token = requests.put(
-            "http://169.254.169.254/latest/api/token",
-            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
-            timeout=1,
-        ).text
-
-        # Get metadata (example: instance-id)
-        metadata = requests.get(
-            "http://169.254.169.254/latest/meta-data/",
-            headers={"X-aws-ec2-metadata-token": token},
-            timeout=1,
-        ).text
-
-        return metadata
 
 
     def _get_fasp_obj(self, url, file_name):
@@ -285,34 +287,14 @@ class ManifestProcessor(object):
     # Arguments:
     # manifest_urls = the CSV set of endpoint URLs
     # priorities = priorities declared when calling client.py
-    def _get_prioritized_endpoint(self, manifest_urls: str, priorities):
+    def _get_prioritized_endpoint(self, manifest_urls: str, priorities: list):
         self.logger.debug("In _get_prioritized_endpoint.")
         url_list = []
 
         urls = manifest_urls.split(',')
-        eps = priorities.split(',')
-
-        # If the user didn't provide a set of priorities, then prioritize based on
-        # whether on an EC2 instance.
-        if ManifestProcessor.ON_AWS is None:
-            if eps[0] == "":
-                md = None
-                try:
-                    md = self._get_instance_metadata()
-                except:
-                    ON_AWS = False
-                    self.logger.info("No instance metadata from AWS.")
-
-                if md is not None:
-                    ManifestProcessor.ON_AWS = True
-                    eps = ['S3', 'HTTP', 'FTP']
-                else:
-                    # If none provided, use this order
-                    ManifestProcessor.ON_AWS = False
-                    eps = ['HTTP', 'FTP', 'S3']
 
         # Go through and build a list starting with the higher priorities first.
-        for ep in eps:
+        for ep in priorities:
             for url in urls:
                 if url.startswith(ep.lower()):
                     url_list.append(url)

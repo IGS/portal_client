@@ -9,7 +9,7 @@ import os
 import errno
 import sys
 
-from .manifest_processor import ManifestProcessor
+from .manifest_processor import ManifestProcessor, is_running_on_aws
 from .convert_to_manifest import file_to_manifest, url_to_manifest
 
 logger = logging.getLogger()
@@ -208,6 +208,20 @@ def retry_results_msg(file_count: int, failure_1: int, failure_2: int, failure_3
     print()
     print(msg.format(file_count, failure_1, failure_2, failure_3))
 
+def _detect_endpoint_priority():
+    """
+    Determine the default endpoint priority. If running on an AWS EC2
+    instance, prioritize S3. Otherwise, use the standard default order.
+    """
+    try:
+        if is_running_on_aws():
+            logger.info("Running on AWS EC2. Prioritizing S3.")
+            return ['S3', 'HTTP', 'GS', 'FTP']
+    except Exception:
+        pass
+
+    return ['HTTP', 'GS', 'S3', 'FTP']
+
 def main():
     """
     The entrypoint into the portal_client code.
@@ -217,7 +231,6 @@ def main():
     if args.debug:
         set_logging()
 
-    default_endpoint_priority = ['HTTP', 'GS', 'S3', 'FTP']
     valid_endpoints = ['HTTP', 'FTP', 'S3', 'FASP', 'GS']
 
     if args.endpoint_priority != "":
@@ -229,7 +242,7 @@ def main():
                     "the endpoint-priority option for valid entries.\n")
                 sys.exit(1)
     else:
-        endpoints = default_endpoint_priority
+        endpoints = _detect_endpoint_priority()
 
     if args.destination != ".":
         try:
@@ -273,7 +286,7 @@ def main():
         failed_files = mp.download_manifest(
             manifest,
             destination,
-            args.endpoint_priority
+            endpoints
         )
 
         if len(failed_files) == 0 or failed_files.count(0) == len(failed_files):
