@@ -57,5 +57,4 @@ def tsv_to_manifest(tsv_object):
             })
             ids[row[0]] = 1
 
-    print(row[3])
     return manifest

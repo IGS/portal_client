@@ -12,7 +12,7 @@ import sys
 from .manifest_processor import ManifestProcessor, is_running_on_aws
 from .convert_to_manifest import file_to_manifest, url_to_manifest
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 def obtain_password():
     """
@@ -181,7 +181,6 @@ def validate_cli(args, endpoints):
                              "retrieving data with aspera/fasp.\n")
             cli_error = True
     from pprint import pprint
-    pprint(endpoints)
 
     if 'GS' in endpoints and args.project_id is None:
         sys.stderr.write("Must --google-project-id when retrieving data from Google.\n")
