@@ -23,7 +23,7 @@ class PortalFTP:
         # A dictionary to store connections keyed by hostname
         self.connections = {}
 
-    def download_file(self, url, local_path):
+    def download_file(self, url, local_path, progress_bar=None):
         """
         Given a remote FTP file's URL, download it and save it to the specified
         local path.
@@ -44,34 +44,29 @@ class PortalFTP:
 
             if current_byte < remote_file_size:
                 self.logger.warning("The local file is smaller than the remote one.")
-                self._handle_chunked_download(url, local_path, current_byte, remote_file_size)
+                self._handle_chunked_download(url, local_path, current_byte, remote_file_size, progress_bar)
             elif current_byte > remote_file_size:
                 self.logger.warning("The local file is LARGER than the remote one! Skipping.")
             else:
                 # sizes must be equal
                 self.logger.info("File already present. Skipping.")
         else:
-            self._handle_chunked_download(url, local_path, current_byte, remote_file_size)
+            self._handle_chunked_download(url, local_path, current_byte, remote_file_size, progress_bar)
 
-    def _handle_chunked_download(self, url, file_name, current_byte, file_size):
+    def _handle_chunked_download(self, url, file_name, current_byte, file_size, progress_bar=None):
         self.logger.debug("In _handle_chunked_download: %s", url)
 
         res = self._get_url_obj(url)
 
         blocksize = self.blocksize
 
+        if progress_bar is not None:
+            progress_bar.reset(total=file_size)
+            progress_bar.update(current_byte)
+
         with open(file_name, 'ab') as file:
 
-            print(
-                "Downloading file via FTP: {0} | total bytes = {1}"
-                    .format(file_name, file_size)
-            )
-
-            if blocksize > file_size:
-                _generate_status_message("block size greater than " + \
-                    "total file size. Pulling in entire file.")
-
-            self._get_buffer(res, current_byte, file_size, file)
+            self._get_buffer(res, current_byte, file_size, file, progress_bar)
 
 
     def _get_ftp_connection(self, host):
@@ -126,23 +121,16 @@ class PortalFTP:
     # Function to retrieve a particular set of bytes from the file.
     # Arguments:
     # res = network object created by get_url_obj()
-    def _get_buffer(self, res, start_pos, max_range, file):
+    def _get_buffer(self, res, start_pos, max_range, file, progress_bar=None):
         self.logger.debug("In _get_buffer.")
 
-        current_byte = start_pos
-
         # The Python ftplib requires transfer to pass to a callback function,
-        # using this to break up the download into pieces. Unfortunately this
-        # function by default accepts just the byte-block being pulled by
-        # .retrbinary() so we need a nonlocal variable to help with printing
-        # out the progress.
+        # using this to break up the download into pieces.
         def callback(data):
-            nonlocal current_byte
-
             file.write(data)
 
-            current_byte += len(data)
-            _generate_status_message("{0}  [{1:.2f}%]".format(current_byte, current_byte * 100 / max_range))
+            if progress_bar is not None:
+                progress_bar.update(len(data))
 
         res(callback, self.blocksize, start_pos)
 
@@ -157,11 +145,3 @@ class PortalFTP:
 
         return {'dest': dest, 'host': host, 'file_path': file_path}
 
-# Function to output a status message to the user.
-# Argument:
-# message = the string to temporarily output to the user
-def _generate_status_message(message):
-    status = message
-    # backspace everything
-    status = status + chr(8) * (len(status) + 1)
-    print("\r{0}".format(status), end="")

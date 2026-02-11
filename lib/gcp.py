@@ -11,7 +11,7 @@ class GCP:
     """
     The GCP class provides for simple retrieval of data from Google Storage.
     """
-    def __init__(self, project_id):
+    def __init__(self, project_id, blocksize=100000):
         """
         Constructor for the GCP class.
         """
@@ -20,6 +20,7 @@ class GCP:
         self.logger.addHandler(logging.NullHandler())
 
         self._project_id = project_id
+        self.blocksize = blocksize
 
         self.client = storage.Client(project=self._project_id)  # uses ADC
 
@@ -28,7 +29,7 @@ class GCP:
     def project_id(self):
         return self._project_id
 
-    def download_file(self, gs_remote_path, local_path):
+    def download_file(self, gs_remote_path, local_path, progress_bar=None):
         """
         Given a remote GCP object's URL, starting with gs://, download it and
         save it to the specified local path.
@@ -52,4 +53,19 @@ class GCP:
 
         self.logger.info("Downloading %s to %s.", obj_path, local_path)
 
-        blob.download_to_filename(local_path)
+        blob.reload()
+        file_size = blob.size
+
+        if progress_bar is not None:
+            progress_bar.reset(total=file_size)
+
+        with blob.open("rb") as remote_file:
+            with open(local_path, "wb") as local_file:
+                while True:
+                    chunk = remote_file.read(self.blocksize)
+                    if not chunk:
+                        break
+                    local_file.write(chunk)
+
+                    if progress_bar is not None:
+                        progress_bar.update(len(chunk))

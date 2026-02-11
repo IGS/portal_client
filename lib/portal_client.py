@@ -152,6 +152,12 @@ def parse_cli():
         help='Display additional debugging information/logs at runtime.'
     )
 
+    parser.add_argument(
+        '-s', '--silent',
+        action='store_true',
+        help='Suppress all output except errors.'
+    )
+
     args = parser.parse_args()
 
     # This is later populated if the user specifies the --user argument.
@@ -180,8 +186,6 @@ def validate_cli(args, endpoints):
             sys.stderr.write("Must specify username with --user when " + \
                              "retrieving data with aspera/fasp.\n")
             cli_error = True
-    from pprint import pprint
-
     if 'GS' in endpoints and args.project_id is None:
         sys.stderr.write("Must --google-project-id when retrieving data from Google.\n")
         cli_error = True
@@ -265,7 +269,9 @@ def main():
 
     logger.debug("Creating ManifestProcessor.")
     mp = ManifestProcessor(username, password,
-                           google_project_id=project_id)
+                           google_project_id=project_id,
+                           debug=args.debug,
+                           silent=args.silent)
 
     # Turn off MD5 checksumming if specified by the user
     if args.disable_validation:
@@ -280,6 +286,10 @@ def main():
         elif args.url:
             manifest = url_to_manifest(args.url)
 
+        if not args.silent:
+            print("Endpoint priority: {0}".format(", ".join(endpoints)))
+            print("Found {0} file(s) in manifest.".format(len(manifest)))
+
         logger.debug("About to start downloading manifest.")
 
         failed_files = mp.download_manifest(
@@ -290,6 +300,8 @@ def main():
 
         if len(failed_files) == 0 or failed_files.count(0) == len(failed_files):
             # No failures found
+            if not args.silent:
+                print("All {0} file(s) downloaded successfully.".format(len(failed_files)))
             keep_trying = False
         else:
             retry_results_msg(

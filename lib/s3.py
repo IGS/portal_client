@@ -22,7 +22,7 @@ class S3(object):
         # Estalish an anonymous connection to S3 with boto
         self.connection = boto3.client('s3', config=Config(signature_version=UNSIGNED))
 
-    def download_file(self, s3_remote_path, local_path):
+    def download_file(self, s3_remote_path, local_path, progress_bar=None):
         self.logger.debug("In download_file.")
 
         if not s3_remote_path.startswith('s3://'):
@@ -40,34 +40,30 @@ class S3(object):
 
             if current_byte < remote_file_size:
                 self.logger.warn("The local file is smaller than the remote one.")
-                self._handle_chunked_download(s3_remote_path, local_path, current_byte, remote_file_size)
+                self._handle_chunked_download(s3_remote_path, local_path, current_byte, remote_file_size, progress_bar)
             elif current_byte > remote_file_size:
                 self.logger.warn("The local file is LARGER than the remote one! Skipping.")
             else:
                 # sizes must be equal
                 self.logger.info("File already present. Skipping.")
         else:
-            self._handle_chunked_download(s3_remote_path, local_path, current_byte, remote_file_size)
+            self._handle_chunked_download(s3_remote_path, local_path, current_byte, remote_file_size, progress_bar)
 
 
-    def _handle_chunked_download(self, url, tmp_file_name, current_byte, file_size):
+    def _handle_chunked_download(self, url, tmp_file_name, current_byte, file_size, progress_bar=None):
         self.logger.debug("In _handle_chunked_download.")
 
         res = self._get_url_obj(url)
 
         blocksize = self.blocksize
 
+        if progress_bar is not None:
+            progress_bar.reset(total=file_size)
+            progress_bar.update(current_byte)
+
         with open(tmp_file_name, 'ab') as filehandle:
-            print(
-                "Downloading file from AWS S3: {0} | total bytes = {1}"
-                    .format(tmp_file_name, file_size)
-            )
 
             while True:
-                if blocksize > file_size:
-                    self._generate_status_message("block size greater than " + \
-                        "total file size, pulling in entire file.")
-
                 buf = self._get_buffer(res, current_byte, file_size, filehandle)
 
                 # Note: only HTTP and S3 make it beyond this point
@@ -78,12 +74,8 @@ class S3(object):
 
                 current_byte += len(buf)
 
-                msg = "{0}  [{1:.2f}%]".format(
-                    current_byte,
-                    current_byte * 100 / file_size
-                )
-
-                self._generate_status_message(msg)
+                if progress_bar is not None:
+                    progress_bar.update(len(buf))
 
     # Function to retrieve a particular set of bytes from the file.
     # Arguments:
@@ -150,12 +142,4 @@ class S3(object):
 
         return key.size
 
-    # Function to output a status message to the user.
-    # Argument:
-    # message = the string to temporarily output to the user
-    def _generate_status_message(self, message):
-        status = message
-        # backspace everything
-        status = status + chr(8) * (len(status) + 1)
-        print("\r{0}".format(status), end="")
 

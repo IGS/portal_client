@@ -53,6 +53,7 @@ def tsv_to_manifest(tsv_object):
             manifest.append({
                 'id':row[0],
                 'md5':row[1],
+                'size':int(row[2]),
                 'urls':row[3]
             })
             ids[row[0]] = 1

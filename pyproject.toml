@@ -14,7 +14,8 @@ dependencies = [
     "boto3>=1.40",
     "google-cloud-storage>=3.4",
     "packaging>=23.0",
-    "requests>=2.32"
+    "requests>=2.32",
+    "tqdm>=4.60"
 ]
 
 [project.optional-dependencies]

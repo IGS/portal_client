@@ -7,6 +7,8 @@ import logging
 import os
 import requests
 import shutil
+import sys
+from tqdm import tqdm
 from . import aspera
 from .portal_http import PortalHTTP
 from .s3 import S3
@@ -36,9 +38,17 @@ def is_running_on_aws():
     return True
 
 
+def _format_file_size(size_bytes):
+    """Format a file size in bytes to a human-readable string."""
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size_bytes < 1024:
+            return f"{size_bytes:.1f}{unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.1f}PB"
+
 class ManifestProcessor(object):
 
-    def __init__(self, username=None, password=None, google_project_id=None, blocksize=100000):
+    def __init__(self, username=None, password=None, google_project_id=None, blocksize=100000, debug=False, silent=False):
         """
         Constructor for the ManifestProcessor class.
         """
@@ -56,6 +66,8 @@ class ManifestProcessor(object):
         self.aws_s3 = S3(blocksize=blocksize)
 
         self.blocksize = blocksize
+        self.debug = debug
+        self.silent = silent
 
         self.username = username
 
@@ -68,7 +80,7 @@ class ManifestProcessor(object):
         if google_project_id is not None:
             self.logger.info("Create GCP client.")
             from .gcp import GCP
-            self.gcp_client = GCP(google_project_id)
+            self.gcp_client = GCP(google_project_id, blocksize=blocksize)
 
 
     def _get_fasp_obj(self, url, file_name):
@@ -103,7 +115,7 @@ class ManifestProcessor(object):
 
         return result
 
-    def _get_gcp_obj(self, url, file_name):
+    def _get_gcp_obj(self, url, file_name, progress_bar=None):
         self.logger.debug("In _get_gcp_obj: %s", url)
 
         if not url.startswith('gs://'):
@@ -113,7 +125,7 @@ class ManifestProcessor(object):
         result = None
 
         try:
-            self.gcp_client.download_file(url, file_name)
+            self.gcp_client.download_file(url, file_name, progress_bar=progress_bar)
         except Exception as e:
             self.logger.error(e)
             result = "error"
@@ -122,7 +134,7 @@ class ManifestProcessor(object):
 
         return result
 
-    def _get_ftp_obj(self, url, file_name):
+    def _get_ftp_obj(self, url, file_name, progress_bar=None):
         self.logger.debug("In _get_ftp_obj: %s", url)
 
         if not url.startswith('ftp://'):
@@ -132,7 +144,7 @@ class ManifestProcessor(object):
         result = None
 
         try:
-            self.ftp_client.download_file(url, file_name)
+            self.ftp_client.download_file(url, file_name, progress_bar=progress_bar)
         except Exception as e:
             self.logger.error(e)
             result = "error"
@@ -141,7 +153,7 @@ class ManifestProcessor(object):
 
         return result
 
-    def _get_http_obj(self, url, file_name):
+    def _get_http_obj(self, url, file_name, progress_bar=None):
         self.logger.debug("In _get_http_obj: %s", url)
 
         if not (url.startswith('http://') or url.startswith('https://')):
@@ -151,7 +163,7 @@ class ManifestProcessor(object):
         result = None
 
         try:
-            self.http_client.download_file(url, file_name)
+            self.http_client.download_file(url, file_name, progress_bar=progress_bar)
         except Exception as e:
             self.logger.error(e)
             result = "error"
@@ -160,7 +172,7 @@ class ManifestProcessor(object):
 
         return result
 
-    def _get_s3_obj(self, url, file_name):
+    def _get_s3_obj(self, url, file_name, progress_bar=None):
         self.logger.debug("In _get_s3_obj: %s", url)
 
         if not url.startswith('s3://'):
@@ -170,7 +182,7 @@ class ManifestProcessor(object):
         result = None
 
         try:
-            self.aws_s3.download_file(url, file_name)
+            self.aws_s3.download_file(url, file_name, progress_bar=progress_bar)
         except Exception as e:
             self.logger.error(e)
             result = "error"
@@ -190,6 +202,13 @@ class ManifestProcessor(object):
 
         self.validation = False
 
+    def _write_error(self, progress_bar, message):
+        """Write an error message, using tqdm.write or stderr as appropriate."""
+        if self.silent:
+            sys.stderr.write(message + "\n")
+        else:
+            progress_bar.write(message)
+
     def download_manifest(self, manifest, destination, priorities):
         """
         Downloads each URL from the manifest.
@@ -207,14 +226,21 @@ class ManifestProcessor(object):
         failed_files = []
 
         # iterate over the manifest data structure, one ID/file at a time
-        for mfile in manifest:
+        overall_bar = tqdm(
+            manifest, desc="Downloading", unit="file",
+            disable=self.silent
+        )
 
+        for mfile in overall_bar:
             url_list = self._get_prioritized_endpoint(mfile['urls'], priorities)
 
             # Handle private data or simply nodes that are not correct and lack
             # endpoint data
             if not url_list:
-                print("No valid URL found in the manifest for file ID {0}".format(mfile['id']))
+                self._write_error(
+                    overall_bar,
+                    "No valid URL found in the manifest for file ID {0}".format(mfile['id'])
+                )
                 failed_files.append(1)
                 continue
 
@@ -233,6 +259,19 @@ class ManifestProcessor(object):
                 res, endpoint = ("" for i in range(2))
                 endpoints = []
 
+                file_desc = "{0} | {1} | {2}".format(
+                    mfile['id'], url_file_element, _format_file_size(mfile['size'])
+                )
+
+                # Create per-file progress bar for protocols that support it
+                file_bar = None
+                if not self.silent:
+                    file_bar = tqdm(
+                        total=mfile['size'], desc=file_desc,
+                        unit="B", unit_scale=True,
+                        position=1, leave=False
+                    )
+
                 for url in url_list:
                     endpoint = url.split(':')[0].upper()
                     endpoints.append(endpoint)
@@ -240,13 +279,13 @@ class ManifestProcessor(object):
                     if endpoint == "FASP":
                         res = self._get_fasp_obj(url, tmp_file_name)
                     elif endpoint == "GS":
-                        res = self._get_gcp_obj(url, tmp_file_name)
+                        res = self._get_gcp_obj(url, tmp_file_name, progress_bar=file_bar)
                     elif endpoint == "HTTP" or endpoint == "HTTPS":
-                        res = self._get_http_obj(url, tmp_file_name)
+                        res = self._get_http_obj(url, tmp_file_name, progress_bar=file_bar)
                     elif endpoint == "FTP":
-                        res = self._get_ftp_obj(url, tmp_file_name)
+                        res = self._get_ftp_obj(url, tmp_file_name, progress_bar=file_bar)
                     elif endpoint == "S3":
-                        res = self._get_s3_obj(url, tmp_file_name)
+                        res = self._get_s3_obj(url, tmp_file_name, progress_bar=file_bar)
                     else:
                         res = "error"
 
@@ -254,9 +293,15 @@ class ManifestProcessor(object):
                     if res == "error":
                         continue
 
+                if file_bar is not None:
+                    file_bar.close()
+
                 # If all attempts resulted in error, move on to next file
                 if res == "error":
-                    print(f"Skipping file ID {mfile['id']} as none of the URLs {endpoints} succeeded.")
+                    self._write_error(
+                        overall_bar,
+                        f"Skipping file ID {mfile['id']} as none of the URLs {endpoints} succeeded."
+                    )
                     failed_files.append(2)
                     continue
 
@@ -268,10 +313,11 @@ class ManifestProcessor(object):
                         shutil.move(tmp_file_name, file_name)
                         failed_files.append(0)
                     else:
-                        print("\r")
-                        msg = "MD5 check failed for the file ID {0}. " + \
-                              "Data may be corrupted."
-                        print(msg.format(mfile['id']))
+                        self._write_error(
+                            overall_bar,
+                            "MD5 check failed for the file ID {0}. "
+                            "Data may be corrupted.".format(mfile['id'])
+                        )
                         failed_files.append(3)
                 else:
                     self.logger.debug(
