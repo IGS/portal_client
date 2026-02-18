@@ -1,3 +1,19 @@
+portal_client 1.5.2
+
+ * Fixed endpoint priority bug that caused the first manifest file
+   to skip GS URLs. Centralized priority resolution and extracted
+   AWS EC2 detection into a standalone utility function.
+ * Replaced print-based progress reporting with tqdm progress bars.
+   An overall bar tracks file count and a per-file bar shows
+   byte-level download progress across all protocols.
+ * Converted GCP downloads to chunked reads via blob.open() to
+   enable byte-level progress reporting.
+ * Added --silent flag to suppress all output except errors.
+ * Added startup info (endpoint priority, file count) and a
+   success summary message on completion.
+
+ - Roland <rlaboulaye@github.com>  Wed, 11 Feb 2026 16:00:00 -0400
+
 portal_client 1.5.1
  * Using the client bucket() method instead of get_bucket()
 
