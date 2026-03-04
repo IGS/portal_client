@@ -9,6 +9,10 @@ import io
 import logging
 import sys
 
+# Increase csv field size limit (useful when file is linked to many samples)
+csv.field_size_limit(sys.maxsize)
+
+# Initialize logger
 logger = logging.getLogger(__name__)
 
 def file_to_manifest(file):
