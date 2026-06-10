@@ -50,16 +50,24 @@ def tsv_to_manifest(tsv_object):
     ids = {}
 
     reader = csv.reader(tsv_object, delimiter="\t")
-    next(reader, None) # skip the manifest header
+    header = next(reader, None)
+    if header is None:
+        return manifest
+    col = {name: i for i, name in enumerate(header)}
+    required = {'file_id', 'md5', 'size', 'urls'}
+    missing = required - col.keys()
+    if missing:
+        raise ValueError(f"Manifest is missing required columns: {missing}")
 
     for row in reader:
-        if row[0] not in ids:
+        file_id = row[col['file_id']]
+        if file_id not in ids:
             manifest.append({
-                'id':row[0],
-                'md5':row[1],
-                'size':int(row[2]),
-                'urls':row[3]
+                'id': file_id,
+                'md5': row[col['md5']],
+                'size': int(row[col['size']]),
+                'urls': row[col['urls']]
             })
-            ids[row[0]] = 1
+            ids[file_id] = 1
 
     return manifest
