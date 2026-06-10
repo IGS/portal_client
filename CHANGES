@@ -1,3 +1,10 @@
+portal_client 1.5.4
+
+ * Fix manifest TSV parsing to use column names instead of positional indices
+ * Improve GCS support: fix requester-pays billing, make --google-project-id optional, surface errors
+
+ - Roland <rlaboulaye@github.com>  Wed, 10 June 2026 16:30:00 -0400
+
 portal_client 1.5.3
 
  * Increased csv field_size_limit to handle manifests with wide 
