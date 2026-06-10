@@ -77,6 +77,7 @@ class ManifestProcessor(object):
         # retrieved/downloaded.
         self.validation = True
 
+        self._google_project_id = google_project_id
         if google_project_id is not None:
             self.logger.info("Create GCP client.")
             from .gcp import GCP
@@ -122,12 +123,17 @@ class ManifestProcessor(object):
             self.logger.error("Detected an invalid GCP url.")
             raise Exception("GCP URLs must begin with gs://")
 
+        if not hasattr(self, 'gcp_client'):
+            from .gcp import GCP
+            self.gcp_client = GCP(self._google_project_id, blocksize=self.blocksize)
+
         result = None
 
         try:
             self.gcp_client.download_file(url, file_name, progress_bar=progress_bar)
         except Exception as e:
-            self.logger.error(e)
+            self.logger.debug(e)
+            self._write_error(progress_bar, f"GCS download failed: {e}")
             result = "error"
 
         self.logger.debug("Returning %s", result)

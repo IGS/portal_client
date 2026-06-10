@@ -14,6 +14,7 @@ from .convert_to_manifest import file_to_manifest, url_to_manifest
 
 logger = logging.getLogger(__name__)
 
+
 def obtain_password():
     """
     Interactively obtain the user's password (securely).
@@ -22,9 +23,10 @@ def obtain_password():
     import getpass
 
     print("Enter your password: (masked)")
-    password = getpass.getpass('')
+    password = getpass.getpass("")
 
     return password
+
 
 def set_logging():
     """
@@ -35,10 +37,11 @@ def set_logging():
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     ch.setFormatter(formatter)
     root.addHandler(ch)
+
 
 def get_version():
     """
@@ -55,6 +58,7 @@ def get_version():
 
     return version
 
+
 def parse_cli():
     """
     Establishes the CLI interface by defining the parameter names and
@@ -62,100 +66,99 @@ def parse_cli():
     and parses the command line arguments.
     """
     parser = argparse.ArgumentParser(
-        description='Client to download data described by a manifest file ' + \
-                    'generated from a portal instance.'
+        description="Client to download data described by a manifest file "
+        + "generated from a portal instance."
     )
 
     parser.add_argument(
-        '--version',
-        action='version',
-        version='%(prog)s ' + get_version()
+        "--version", action="version", version="%(prog)s " + get_version()
     )
 
     parser.add_argument(
-        '-m', '--manifest',
-        type=str,
-        help='Location of a locally stored manifest file.'
+        "-m", "--manifest", type=str, help="Location of a locally stored manifest file."
     )
 
     parser.add_argument(
-        '-u', '--url',
+        "-u",
+        "--url",
         type=str,
         required=False,
-        help='URL path to a manifest file stored at an HTTP endpoint.'
+        help="URL path to a manifest file stored at an HTTP endpoint.",
     )
 
     parser.add_argument(
-        '--disable-validation',
-        dest='disable_validation',
-        action='store_true',
-        help='Disable MD5 checksum validation.'
+        "--disable-validation",
+        dest="disable_validation",
+        action="store_true",
+        help="Disable MD5 checksum validation.",
     )
 
     parser.add_argument(
-        '-t', '--token',
+        "-t",
+        "--token",
         type=str,
         required=False,
-        help='Token string generated for a cart from portal.ihmpdcc.org.'
+        help="Token string generated for a cart from portal.ihmpdcc.org.",
     )
 
     parser.add_argument(
-        '--google-project-id',
+        "--google-project-id",
         type=str,
         required=False,
-        dest='project_id',
-        help='The Google project ID to use. When using GCP (Google ' + \
-              'Cloud Platform) storage endpoints, this option is required.'
+        dest="project_id",
+        help="Google project ID to bill for GCS requests to requester-pays buckets. "
+        + "Does not affect bucket access, which is controlled solely by your gcloud "
+        + "Application Default Credentials (ADC).",
     )
 
     parser.add_argument(
-        '-d', '--destination',
+        "-d",
+        "--destination",
         type=str,
         required=False,
         default=".",
-        help='Optional location to place all the downloads. ' + \
-             'Defaults to the current directory.'
+        help="Optional location to place all the downloads. "
+        + "Defaults to the current directory.",
     )
 
     parser.add_argument(
-        '--endpoint-priority',
+        "--endpoint-priority",
         type=str,
         required=False,
         default="",
-        help='Optional comma-separated protocol priorities (descending). ' + \
-             'The valid protocols are "HTTP", "FTP", "FASP", "S3" and "GS" ' + \
-             '(and defaults to that order).'
+        help="Optional comma-separated protocol priorities (descending). "
+        + 'The valid protocols are "HTTP", "FTP", "FASP", "S3" and "GS" '
+        + "(and defaults to that order).",
     )
 
     parser.add_argument(
-        '--user',
+        "--user",
         type=str,
         required=False,
-        help='The username to authenticate with when using Aspera ' + \
-             'endpoints. All FASP (aspera) endpoints require ' + \
-             'authentication. Note: Using --user will automatically ' + \
-             'trigger an interactive request for a password.'
+        help="The username to authenticate with when using Aspera "
+        + "endpoints. All FASP (aspera) endpoints require "
+        + "authentication. Note: Using --user will automatically "
+        + "trigger an interactive request for a password.",
     )
 
     parser.add_argument(
-        '-r', '--retries',
+        "-r",
+        "--retries",
         type=int,
         required=False,
         default=0,
-        help='Optional number of retries to perform in case of download ' + \
-             'failures. Defaults to 0.'
+        help="Optional number of retries to perform in case of download "
+        + "failures. Defaults to 0.",
     )
 
     parser.add_argument(
-        '--debug',
-        action='store_true',
-        help='Display additional debugging information/logs at runtime.'
+        "--debug",
+        action="store_true",
+        help="Display additional debugging information/logs at runtime.",
     )
 
     parser.add_argument(
-        '-s', '--silent',
-        action='store_true',
-        help='Suppress all output except errors.'
+        "-s", "--silent", action="store_true", help="Suppress all output except errors."
     )
 
     args = parser.parse_args()
@@ -175,21 +178,20 @@ def validate_cli(args, endpoints):
     logger.debug("In validate_cli.")
     cli_error = False
 
-    if 'FASP' in endpoints:
+    if "FASP" in endpoints:
         from . import aspera
+
         if not aspera.is_ascp_installed():
             sys.stderr.write("The ASCP binary is not installed or available.\n")
             sys.stderr.write("Please install it or adjust yor PATH.\n")
             cli_error = True
 
         if args.user is None:
-            sys.stderr.write("Must specify username with --user when " + \
-                             "retrieving data with aspera/fasp.\n")
+            sys.stderr.write(
+                "Must specify username with --user when "
+                + "retrieving data with aspera/fasp.\n"
+            )
             cli_error = True
-    if 'GS' in endpoints and args.project_id is None:
-        sys.stderr.write("Must --google-project-id when retrieving data from Google.\n")
-        cli_error = True
-
     if args.user is not None:
         password = obtain_password()
         args.password = password
@@ -198,18 +200,22 @@ def validate_cli(args, endpoints):
         logger.error("Aborting execution.")
         sys.exit(1)
 
+
 def retry_results_msg(file_count: int, failure_1: int, failure_2: int, failure_3: int):
     """
     Outputs the results of those files that failed to download.
     """
 
-    msg = "Not all files (total of {0}) were downloaded successfully. Number of failures:\n" \
-        "{1} -- no valid URL in the manifest file\n" \
-        "{2} -- URL is present in manifest, but not accessible at the location specified\n" \
+    msg = (
+        "Not all files (total of {0}) were downloaded successfully. Number of failures:\n"
+        "{1} -- no valid URL in the manifest file\n"
+        "{2} -- download failed (see errors above for details)\n"
         "{3} -- MD5 checksum failed for file (file is corrupted or the wrong MD5 is associated)"
+    )
 
     print()
     print(msg.format(file_count, failure_1, failure_2, failure_3))
+
 
 def _detect_endpoint_priority():
     """
@@ -219,11 +225,12 @@ def _detect_endpoint_priority():
     try:
         if is_running_on_aws():
             logger.info("Running on AWS EC2. Prioritizing S3.")
-            return ['S3', 'HTTP', 'GS', 'FTP']
+            return ["S3", "HTTP", "GS", "FTP"]
     except Exception:
         pass
 
-    return ['HTTP', 'GS', 'S3', 'FTP']
+    return ["HTTP", "GS", "S3", "FTP"]
+
 
 def main():
     """
@@ -234,15 +241,17 @@ def main():
     if args.debug:
         set_logging()
 
-    valid_endpoints = ['HTTP', 'FTP', 'S3', 'FASP', 'GS']
+    valid_endpoints = ["HTTP", "FTP", "S3", "FASP", "GS"]
 
     if args.endpoint_priority != "":
-        endpoints = args.endpoint_priority.split(',')
+        endpoints = args.endpoint_priority.split(",")
 
         for endpoint in endpoints:
             if endpoint not in valid_endpoints:
-                sys.stderr.write("Error: Invalid protocol. Please check " + \
-                    "the endpoint-priority option for valid entries.\n")
+                sys.stderr.write(
+                    "Error: Invalid protocol. Please check "
+                    + "the endpoint-priority option for valid entries.\n"
+                )
                 sys.exit(1)
     else:
         endpoints = _detect_endpoint_priority()
@@ -268,10 +277,13 @@ def main():
     failed_files = []
 
     logger.debug("Creating ManifestProcessor.")
-    mp = ManifestProcessor(username, password,
-                           google_project_id=project_id,
-                           debug=args.debug,
-                           silent=args.silent)
+    mp = ManifestProcessor(
+        username,
+        password,
+        google_project_id=project_id,
+        debug=args.debug,
+        silent=args.silent,
+    )
 
     # Turn off MD5 checksumming if specified by the user
     if args.disable_validation:
@@ -292,23 +304,21 @@ def main():
 
         logger.debug("About to start downloading manifest.")
 
-        failed_files = mp.download_manifest(
-            manifest,
-            destination,
-            endpoints
-        )
+        failed_files = mp.download_manifest(manifest, destination, endpoints)
 
         if len(failed_files) == 0 or failed_files.count(0) == len(failed_files):
             # No failures found
             if not args.silent:
-                print("All {0} file(s) downloaded successfully.".format(len(failed_files)))
+                print(
+                    "All {0} file(s) downloaded successfully.".format(len(failed_files))
+                )
             keep_trying = False
         else:
             retry_results_msg(
                 len(failed_files),
                 failed_files.count(1),
                 failed_files.count(2),
-                failed_files.count(3)
+                failed_files.count(3),
             )
 
             if attempt == args.retries:
@@ -321,5 +331,6 @@ def main():
                 if failed_files.count(1) == len(failed_files):
                     keep_trying = False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

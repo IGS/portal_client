@@ -5,13 +5,14 @@ Handles the downloading of data from Google Cloud Platform (Google Storage).
 import os
 import logging
 from google.cloud import storage
+from google.api_core import exceptions as gcp_exceptions
 from os import path
 
 class GCP:
     """
     The GCP class provides for simple retrieval of data from Google Storage.
     """
-    def __init__(self, project_id, blocksize=100000):
+    def __init__(self, project_id=None, blocksize=100000):
         """
         Constructor for the GCP class.
         """
@@ -47,13 +48,26 @@ class GCP:
         self.logger.debug("Bucket name: %s", bucket_name)
         self.logger.debug("Object path: %s", obj_path)
 
-        bucket = self.client.bucket(bucket_name)
+        bucket = self.client.bucket(bucket_name, user_project=self._project_id)
 
         blob = bucket.blob(obj_path)
 
         self.logger.info("Downloading %s to %s.", obj_path, local_path)
 
-        blob.reload()
+        try:
+            blob.reload()
+        except gcp_exceptions.NotFound as e:
+            raise Exception(f"File not found: gs://{bucket_name}/{obj_path}: {e.message}")
+        except gcp_exceptions.Forbidden as e:
+            raise Exception(f"Permission denied: gs://{bucket_name}/{obj_path}: {e.message}")
+        except gcp_exceptions.BadRequest as e:
+            if "requester pays" in str(e).lower() or "user project" in str(e).lower():
+                raise Exception(
+                    f"Bucket gs://{bucket_name} requires a billing project. "
+                    f"Please provide --google-project-id: {e.message}"
+                )
+            raise
+
         file_size = blob.size
 
         if progress_bar is not None:
